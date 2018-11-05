@@ -68,6 +68,33 @@ class EncoderBlock(nn.Module):
         return self.block(x)
 
 
+class Encoder(nn.Module):
+    """
+    Encoder of U-Net
+    """
+
+    def __init__(self, ngf=64):
+        super(Encoder, self).__init__()
+
+        self.encoder = nn.Sequential(
+            EncoderBlock(in_c=3, out_c=ngf, isBN=False),  # C64
+            EncoderBlock(in_c=ngf, out_c=2*ngf),  # C128
+            EncoderBlock(in_c=ngf*2, out_c=ngf*4),  # C256
+            EncoderBlock(in_c=ngf*4, out_c=ngf*8),  # C512
+            EncoderBlock(in_c=ngf*8, out_c=ngf*8),  # C512
+            EncoderBlock(in_c=ngf*8, out_c=ngf*8),  # C512
+            EncoderBlock(in_c=ngf*8, out_c=ngf*8),  # C512
+            EncoderBlock(in_c=ngf*8, out_c=ngf*8)  # C512)
+        )
+
+    def forward(self, x):
+        hs = [self.encoder[0](x)]
+        for block in self.encoder[1:]:
+            hs.append(block(hs[-1]))
+            # print(hs[-1].shape)
+        return hs
+
+
 class DecoderBlock(nn.Module):
     """
     convolution->batchnormalization->dropout->relu
@@ -110,6 +137,47 @@ class DecoderBlock(nn.Module):
         return self.block(x)
 
 
+class Decoder(nn.Module):
+    """
+    Decoder of U-Net
+    """
+
+    def __init__(self, ngf=64):
+        super(Decoder, self).__init__()
+
+        self.decoder = nn.Sequential(
+            DecoderBlock(in_c=ngf*8, out_c=ngf*8),  # CD512
+            DecoderBlock(in_c=ngf*16, out_c=ngf*8),  # CD512
+            DecoderBlock(in_c=ngf*16, out_c=ngf*8),  # CD512
+            DecoderBlock(in_c=ngf*16, out_c=ngf*8),  # CD512
+            DecoderBlock(in_c=ngf*16, out_c=ngf*4),  # CD256
+            DecoderBlock(in_c=ngf*8, out_c=ngf*2),  # CD128
+            DecoderBlock(in_c=ngf*4, out_c=ngf),  # CD64
+            nn.ConvTranspose2d(in_channels=ngf*2, out_channels=3,
+                               kernel_size=4, stride=2, padding=1),  # 論文ではConvolutionとしているがおそらく間違い
+            nn.Tanh()
+        )
+
+    def forward(self, hs):
+        """
+        inference
+
+        Parameter
+        -------------------
+        hs: list of torch.Tensor
+            outputs of decoder to use for skip connect
+
+        """
+        # Decode
+        hs_r = list(reversed(hs))
+        h = self.decoder[0](hs_r[0])
+        print(h.shape)
+        for skip, block in zip(hs_r[1:], self.decoder[1:]):
+            h = block(torch.cat((h, skip), dim=1))
+            print(h.shape)
+        return h
+
+
 class UnetGenerator(nn.Module):
     """
     U-Net Generator
@@ -120,56 +188,27 @@ class UnetGenerator(nn.Module):
         the number of gen filters in first conv layer
     """
 
-    def __init__(self, ngf=64, ):
+    def __init__(self, ngf=64):
         super(UnetGenerator, self).__init__()
 
-        # Encoder
-        self.ec1 = EncoderBlock(in_c=3, out_c=ngf, isBN=False)  # C64
-        self.ec2 = EncoderBlock(in_c=ngf, out_c=2*ngf)  # C128
-        self.ec3 = EncoderBlock(in_c=ngf*2, out_c=ngf*4)  # C256
-        self.ec4 = EncoderBlock(in_c=ngf*4, out_c=ngf*8)  # C512
-        self.ec5 = EncoderBlock(in_c=ngf*8, out_c=ngf*8)  # C512
-        self.ec6 = EncoderBlock(in_c=ngf*8, out_c=ngf*8)  # C512
-        self.ec7 = EncoderBlock(in_c=ngf*8, out_c=ngf*8)  # C512
-        self.ec8 = EncoderBlock(in_c=ngf*8, out_c=ngf*8)  # C512
-
-        # Decoder
-        self.dc1 = DecoderBlock(in_c=ngf*8, out_c=ngf*8)  # CD512
-        self.dc2 = DecoderBlock(in_c=ngf*16, out_c=ngf*8)  # CD512
-        self.dc3 = DecoderBlock(in_c=ngf*16, out_c=ngf*8)  # CD512
-        self.dc4 = DecoderBlock(in_c=ngf*16, out_c=ngf*8)  # CD512
-        self.dc5 = DecoderBlock(in_c=ngf*16, out_c=ngf*4)  # CD256
-        self.dc6 = DecoderBlock(in_c=ngf*8, out_c=ngf*2)  # CD128
-        self.dc7 = DecoderBlock(in_c=ngf*4, out_c=ngf)  # CD64
-        self.dc8 = nn.ConvTranspose2d(in_channels=ngf*2, out_channels=3,
-                                      kernel_size=3, stride=1, padding=1)  # 論文ではConvolutionとしているがおそらく間違い
+        self.encoder = Encoder(ngf=ngf)
+        self.decoder = Decoder(ngf=ngf)
 
     def forward(self, x):
-        intermediates = []
         # Encode
-        h = x
-        for i, block in enumerate(self.children())
-           if block.__class__.__name__ == 'DecoderBlock':
-                break
-            h = block(h)
-            intermediates.append(h)
-        h1 = self.ec1(x)
-        h2 = self.ec2(h1)
-        h3 = self.ec3(h2)
-        h4 = self.ec4(h3)
-        h5 = self.ec5(h4)
-        h6 = self.ec6(h5)
-        h7 = self.ec7(h6)
-        h8 = self.ec8(h7)
-
+        hs = self.encoder(x)
         # Decode
-        h9 = self.dc1(h8)
-        h10 = self.dc2(torch.cat((h9, h7), dim=1))
-        h11 = self.dc3(torch.cat((h10, h6), dim=1))
-        h12 = self.dc4(torch.cat((h11, h5), dim=1))
-        h13 = self.dc5(torch.cat((h12, h4), dim=1))
-        h14 = self.dc6(torch.cat((h13, h3), dim=1))
-        h15 = self.dc7(torch.cat((h14, h2), dim=1))
-        h16 = self.dc8(torch.cat((h15, h1), dim=1))
+        output = self.decoder(hs)
 
-        return torch.tanh(h16)
+        return output
+
+
+if __name__ == "__main__":
+    import pathlib
+    from tensorboardX import SummaryWriter
+
+    unet = UnetGenerator()
+    path = pathlib.Path('graph')
+    with SummaryWriter(path) as writer:
+        dummy_input = torch.Tensor(10, 3, 256, 256)
+        writer.add_graph(unet, dummy_input)
