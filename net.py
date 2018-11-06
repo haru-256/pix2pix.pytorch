@@ -1,5 +1,4 @@
 import torch
-import torchsummary
 import torch.nn as nn
 from torch.nn import init
 
@@ -43,18 +42,27 @@ class EncoderBlock(nn.Module):
         the size of stride size
     n_pd: int
         the number of paddings
+    norm_type: string or None
+        if None represents not to apply Batch Norm. if `batch` represents to apply Batch Norm.
+        if `instance` represents to apply Instance Norm
 
     """
 
-    def __init__(self, in_c, out_c, ks=4, stride=2, n_pd=1, isBN=True):
+    def __init__(self, in_c, out_c, ks=4, stride=2, n_pd=1, norm_type="instance"):
         super(EncoderBlock, self).__init__()
 
-        if isBN:
+        if norm_type == "batch":
             block = nn.Sequential(
                 nn.Conv2d(in_channels=in_c, out_channels=out_c,
                           kernel_size=ks, stride=stride, padding=n_pd, bias=False),
-                # nn.InstanceNorm2d を使用すべき？ -> 論文ではBatchNorm でn=1やっていたのでしない
                 nn.BatchNorm2d(num_features=out_c),
+                nn.LeakyReLU(negative_slope=0.2))
+        elif norm_type == "instance":
+            block = nn.Sequential(
+                nn.Conv2d(in_channels=in_c, out_channels=out_c,
+                          kernel_size=ks, stride=stride, padding=n_pd, bias=False),
+                nn.InstanceNorm2d(num_features=out_c,
+                                  affine=False, track_running_stats=False),  # affine=False?
                 nn.LeakyReLU(negative_slope=0.2))
         else:
             block = nn.Sequential(
@@ -77,7 +85,7 @@ class Encoder(nn.Module):
         super(Encoder, self).__init__()
 
         self.encoder = nn.Sequential(
-            EncoderBlock(in_c=3, out_c=ngf, isBN=False),  # C64
+            EncoderBlock(in_c=3, out_c=ngf, norm_type=None),  # C64
             EncoderBlock(in_c=ngf, out_c=2*ngf),  # C128
             EncoderBlock(in_c=ngf*2, out_c=ngf*4),  # C256
             EncoderBlock(in_c=ngf*4, out_c=ngf*8),  # C512
@@ -111,25 +119,36 @@ class DecoderBlock(nn.Module):
         the size of stride size
     n_pd: int
         the number of paddings
+    norm_type: string or None
+        if None represents not to apply Batch Norm. if `batch` represents to apply Batch Norm.
+        if `instance` represents to apply Instance Norm
 
     """
 
-    def __init__(self, in_c, out_c, ks=4, stride=2, n_pd=1, isBN=True):
+    def __init__(self, in_c, out_c, ks=4, stride=2, n_pd=1, norm_type='instance'):
         super(DecoderBlock, self).__init__()
 
-        if isBN:
+        if norm_type == 'batch':
             block = nn.Sequential(
                 nn.ConvTranspose2d(in_channels=in_c, out_channels=out_c,
                                    kernel_size=ks, stride=stride, padding=n_pd),
-                # nn.InstanceNorm2d を使用すべき？ -> 論文ではBatchNorm でn=1やっていたのでしない
                 nn.BatchNorm2d(num_features=out_c),
+                nn.Dropout2d(p=0.5),
+                nn.ReLU())
+        elif norm_type == 'instance':
+            block = nn.Sequential(
+                nn.ConvTranspose2d(in_channels=in_c, out_channels=out_c,
+                                   kernel_size=ks, stride=stride, padding=n_pd),
+                nn.InstanceNorm2d(num_features=out_c,
+                                  affine=False, track_running_stats=False),
                 nn.Dropout2d(p=0.5),
                 nn.ReLU())
         else:
             block = nn.Sequential(
                 nn.ConvTranspose2d(in_channels=in_c, out_channels=out_c,
                                    kernel_size=ks, stride=stride, padding=n_pd),
-                nn.LeakyReLU())
+                nn.Dropout2d(p=0.5),
+                nn.ReLU())
 
         self.block = block
 
