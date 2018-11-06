@@ -61,11 +61,13 @@ def train_pix2pix(models, datasets, optimizers,
             labels = {'real': real_labels, 'fake': fake_labels}
             ########################################################
             # (1) Update D network: minimize - 1/ 2 {1/N * log(D(x, y)) + 1/N * log(1 - D(x, G(x, z)))}
+            # minimize - 1/2N * {softplus(-D(x, y)) + softplus(D(x, y))}
             ######################################################
             dis_loss = train_dis(models, optimizers['discriminator'],
                                  inputs, outputs, labels, criterion)
             #######################################################
-            # (2) Update G netwrk: minimize - 1/N * log(D(x, G(x, z))) + 1/N * |y - G(x, z)|
+            # (2) Update G netwrk: minimize - 1/N * log(D(x, G(x, z))) + 1/N * lambda * |y - G(x, z)|
+            # minimize - 1/N { softplus(-D(x, G(x, z))) + lambda * |y - G(x, z)|}
             ######################################################
             fake_labels = torch.ones_like(
                 fake_labels, device=device)
@@ -89,7 +91,7 @@ def train_pix2pix(models, datasets, optimizers,
     tqdm.write('Training complete in {}'.format(time_elapsed))
 
 
-def train_dis(models, dis_optim, inputs, outputs, labels, criterion):
+def train_dis(models, dis_optim, inputs, outputs):
     """
     train discriminator by a iteration
     Parameters
@@ -106,11 +108,6 @@ def train_dis(models, dis_optim, inputs, outputs, labels, criterion):
     outputs: torch.Tensor
         batch data of output image
 
-    labels: dict
-        dictionary that contains label data coresponding to real or fake
-
-    criterion: torch.BCELoss()
-
     Return
     --------------
     dis_loss: torch.Tensor
@@ -120,18 +117,16 @@ def train_dis(models, dis_optim, inputs, outputs, labels, criterion):
 
     # train disctiminator
     dis.train()
-    # zero the parameter gradientsreal
+    # zero the parameters gradientsreal
     dis_optim.zero_grad()
 
-    # make noise & forward
-    z = gen.make_hidden(data.size()[0]).to(data.device)
-    x_fake = gen(z)
-    y_fake = dis(x_fake)
-    y_real = dis()
+    # forward
+    outputs_fake = gen(inputs)
+    fake = dis(outputs_fake, inputs)
+    real = dis(outputs, inputs)
 
     # calc loss for discriminator
-    dis_loss = criterion(
-        y_real, labels['real']) + criterion(y_fake, labels['fake'])
+    dis_loss = torch.mean(F.softplus(-real) + F.softplus(fake)) / 2
 
     # update parameters of discrimminator
     dis_loss.backward()
