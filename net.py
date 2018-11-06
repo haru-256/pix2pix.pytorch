@@ -22,8 +22,10 @@ def weights_init(m, gain):
             init.constant_(m.bias.data, 0.0)
     elif class_name.find('BatchNorm2d') != -1:
         # https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/models/networks.py#L41-L62
-        init.normal_(m.weight.data, 1.0, gain)
-        init.constant_(m.bias.data, 0.0)
+        if hasattr(m, 'weight'):
+            init.normal_(m.weight.data, 1.0, gain)
+        if hasattr(m, 'bias'):
+            init.constant_(m.bias.data, 0.0)
 
 
 class EncoderBlock(nn.Module):
@@ -34,35 +36,42 @@ class EncoderBlock(nn.Module):
     ---------------------------
     in_c: int
         the number of input channels
+
     out_c: int
         the number of output channels
+
     ks: int or tuple
         the size of kernel size
+
     stride: int
         the size of stride size
+
     n_pd: int
         the number of paddings
+
     norm_type: string or None
         if None represents not to apply Batch Norm. if `batch` represents to apply Batch Norm.
         if `instance` represents to apply Instance Norm
 
+    isAffine: boolean
+        whether aplly affine operation.
     """
 
-    def __init__(self, in_c, out_c, ks=4, stride=2, n_pd=1, norm_type="instance"):
+    def __init__(self, in_c, out_c, ks=4, stride=2, n_pd=1, norm_type="instance", isAffine=True):
         super(EncoderBlock, self).__init__()
 
         if norm_type == "batch":
             block = nn.Sequential(
                 nn.Conv2d(in_channels=in_c, out_channels=out_c,
                           kernel_size=ks, stride=stride, padding=n_pd, bias=False),
-                nn.BatchNorm2d(num_features=out_c),
+                nn.BatchNorm2d(num_features=out_c, affine=isAffine),
                 nn.LeakyReLU(negative_slope=0.2))
         elif norm_type == "instance":
             block = nn.Sequential(
                 nn.Conv2d(in_channels=in_c, out_channels=out_c,
                           kernel_size=ks, stride=stride, padding=n_pd, bias=False),
                 nn.InstanceNorm2d(num_features=out_c,
-                                  affine=False, track_running_stats=False),  # affine=False?
+                                  affine=isAffine, track_running_stats=False),  # affine=False?
                 nn.LeakyReLU(negative_slope=0.2))
         else:
             block = nn.Sequential(
@@ -92,7 +101,7 @@ class Encoder(nn.Module):
             EncoderBlock(in_c=ngf*8, out_c=ngf*8),  # C512
             EncoderBlock(in_c=ngf*8, out_c=ngf*8),  # C512
             EncoderBlock(in_c=ngf*8, out_c=ngf*8),  # C512
-            EncoderBlock(in_c=ngf*8, out_c=ngf*8)  # C512)
+            EncoderBlock(in_c=ngf*8, out_c=ngf*8, norm_type=None)  # C512)
         )
 
     def forward(self, x):
@@ -111,28 +120,35 @@ class DecoderBlock(nn.Module):
     ---------------------------
     in_c: int
         the number of input channels
+
     out_c: int
         the number of output channels
+
     ks: int or tuple
         the size of kernel size
+
     stride: int
         the size of stride size
+
     n_pd: int
         the number of paddings
+
     norm_type: string or None
         if None represents not to apply Batch Norm. if `batch` represents to apply Batch Norm.
         if `instance` represents to apply Instance Norm
 
+    isAffine: boolean
+        whether aplly affine operation.
     """
 
-    def __init__(self, in_c, out_c, ks=4, stride=2, n_pd=1, norm_type='instance'):
+    def __init__(self, in_c, out_c, ks=4, stride=2, n_pd=1, norm_type='instance', isAffine=True):
         super(DecoderBlock, self).__init__()
 
         if norm_type == 'batch':
             block = nn.Sequential(
                 nn.ConvTranspose2d(in_channels=in_c, out_channels=out_c,
                                    kernel_size=ks, stride=stride, padding=n_pd),
-                nn.BatchNorm2d(num_features=out_c),
+                nn.BatchNorm2d(num_features=out_c, affine=isAffine),
                 nn.Dropout2d(p=0.5),
                 nn.ReLU())
         elif norm_type == 'instance':
@@ -140,7 +156,7 @@ class DecoderBlock(nn.Module):
                 nn.ConvTranspose2d(in_channels=in_c, out_channels=out_c,
                                    kernel_size=ks, stride=stride, padding=n_pd),
                 nn.InstanceNorm2d(num_features=out_c,
-                                  affine=False, track_running_stats=False),
+                                  affine=isAffine, track_running_stats=False),
                 nn.Dropout2d(p=0.5),
                 nn.ReLU())
         else:
@@ -190,10 +206,8 @@ class Decoder(nn.Module):
         # Decode
         hs_r = list(reversed(hs))
         h = self.decoder[0](hs_r[0])
-        print(h.shape)
         for skip, block in zip(hs_r[1:], self.decoder[1:]):
             h = block(torch.cat((h, skip), dim=1))
-            print(h.shape)
         return h
 
 
@@ -222,12 +236,45 @@ class UnetGenerator(nn.Module):
         return output
 
 
+class PatchDiscriminator(nn.Module):
+    """
+    Patch(70x70) Discriminator
+    実装方法は公式論文とは異なる．こちら参照:https://affinelayer.com/pix2pix/
+
+    Parameters
+    ----------------------
+    ndf: int
+       the number of dis filters in first conv layer 
+    """
+
+    def __init__(self, ndf=64):
+        super(PatchDiscriminator, self).__init__()
+
+        self.c1 = EncoderBlock(in_c=3+3, out_c=ndf, norm_type=None)
+        self.c2 = EncoderBlock(in_c=ndf, out_c=ndf*2)
+        self.c3 = EncoderBlock(in_c=ndf*2, out_c=ndf*4)
+        self.c4 = EncoderBlock(in_c=ndf*4, out_c=ndf*8, stride=1)
+        self.c5 = nn.Conv2d(in_channels=ndf*8, out_channels=1,
+                            kernel_size=4, padding=1, stride=1)
+
+    def forward(self, x, y):
+        h = torch.cat((x, y), dim=1)  # チャンネル方向に入力画像と出力画像を結合
+        for layer in self.children():
+            h = layer(h)
+
+        return h
+
+
 if __name__ == "__main__":
     import pathlib
     from tensorboardX import SummaryWriter
+    from torchsummary import summary
 
     unet = UnetGenerator()
+    patchdis = PatchDiscriminator()
     path = pathlib.Path('graph')
     with SummaryWriter(path) as writer:
-        dummy_input = torch.Tensor(10, 3, 256, 256)
-        writer.add_graph(unet, dummy_input)
+        dummy_input = torch.Tensor(1, 3, 256, 256)
+        dummy_input = unet(dummy_input)
+        writer.add_graph(patchdis, (torch.Tensor(1, 3, 256, 256),
+                                    torch.Tensor(1, 3, 256, 256)))
