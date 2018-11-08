@@ -1,16 +1,19 @@
 import pathlib
-from tqdm import tqdm
 import datetime
+from tqdm import tqdm
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
+import torchvision
 from torchvision import transforms
+import matplotlib.pyplot as plt
 from collections import OrderedDict
 import json
+import math
 
 
-def train_pix2pix(models, datasets, optimizers,
+def train_pix2pix(models, datasets, optimizers, lam,
                   num_epochs, batch_size, device, out, num_workers=2):
     """
     the training function for pix2pix.
@@ -25,6 +28,9 @@ def train_pix2pix(models, datasets, optimizers,
 
     optimizer: dict
         dictionary that contains torch.optim.Optimizer for generator or discriminator
+
+    lam: float
+        a cofficient for l1 loss.
 
     num_epochs: int
         number of epochs
@@ -43,10 +49,13 @@ def train_pix2pix(models, datasets, optimizers,
     """
     epochs = tqdm(range(num_epochs), desc="Epoch", unit='epoch')
     phases = ['train', 'val']
+    # initialize log
+    log = OrderedDict()
     # construct dataloader
-    dataloader = {phase: torch.utils.data.DataLoader(datasets[phase], batch_size=batch_size,
-                                                     shuffle=(phase == 'train'), num_workers=num_workers)
-                  for phase in ['train', 'val']}
+    train_dataloader = torch.utils.data.DataLoader(datasets['train'], batch_size=batch_size,
+                                                   shuffle=True, num_workers=num_workers)
+    val_dataloader = torch.utils.data.DataLoader(datasets['val'], batch_size=len(datasets['val']),
+                                                 shuffle=False, num_workers=num_workers)
     dataset_sizes = {phase: len(datasets[phase]) for phase in phases}
     # train loop
     since = datetime.datetime.now()
@@ -56,7 +65,7 @@ def train_pix2pix(models, datasets, optimizers,
         model.train()  # apply Dropout and BatchNorm during both training and inference
 
     for epoch in epochs:
-        iteration = tqdm(dataloader['train'],
+        iteration = tqdm(train_dataloader,
                          desc="Iteration",
                          unit='iter')
         epoch_dis_loss = 0.0
@@ -70,27 +79,43 @@ def train_pix2pix(models, datasets, optimizers,
             # (1) Update D network: minimize - 1/ 2 {1/N * log(D(x, y)) + 1/N * log(1 - D(x, G(x, z)))}
             # minimize - 1/2N * {softplus(-D(x, y)) + softplus(D(x, y))}
             ######################################################
-            dis_loss = train_dis(models, optimizers['discriminator'],
-                                 inputs, outputs, labels, criterion)
+            dis_loss = train_dis(models, optimizers['dis'],
+                                 inputs, outputs)
             #######################################################
             # (2) Update G netwrk: minimize - 1/N * log(D(x, G(x, z))) + 1/N * lambda * |y - G(x, z)|
             # minimize - 1/N { softplus(-D(x, G(x, z))) + lambda * |y - G(x, z)|}
             ######################################################
             gen_loss = train_gen(
-                models, optimizers['generator'],
-                inputs, fake_labels, criterion)
+                models, optimizers['gen'],
+                inputs, outputs, lam)
             # statistics
             epoch_dis_loss += dis_loss.item() * inputs.size()[0]
             epoch_gen_loss += gen_loss.item() * inputs.size()[0]
 
         # print loss
-        epoch_dis_loss /= dataset_sizes
-        epoch_gen_loss /= dataset_sizes
+        epoch_dis_loss /= dataset_sizes['train']
+        epoch_gen_loss /= dataset_sizes['train']
+
+        # preserve train log & print train loss
+        log["epoch_{}".format(epoch+1)] = OrderedDict(train_dis_loss=epoch_dis_loss,
+                                                      train_gen_loss=epoch_gen_loss)
         tqdm.write('Epoch: {} GenLoss: {:.4f} DisLoss: {:.4f}'.format(
             epoch, epoch_gen_loss, epoch_dis_loss))
+        tqdm.write("-"*60)
+        # save model &  by epoch
+        torch.save({
+            'epoch': epoch,
+            'dis_model_state_dict': models['dis'].state_dict(),
+            'gen_model_state_dict': models['gen'].statedict(),
+            'dis_optim_state_dict': optimizers['dis'].state_dict(),
+            'gen_optim_state_dict': optimizers['gen'].state_dict(),
+            'dis_loss': epoch_dis_loss,
+            'gen_loss': epoch_gen_loss,
+        }, out / 'pix2pix_{}epoch.tar'.format(epoch+1))
 
         # generate fake image
-        visualize(epoch, models['generator'], log_dir=out, device=device)
+        visualize(epoch, models['gen'], val_dataloader=val_dataloader,
+                  log_dir=out, device=device)
 
     time_elapsed = datetime.datetime.now() - since
     tqdm.write('Training complete in {}'.format(time_elapsed))
@@ -181,17 +206,20 @@ def train_gen(models, gen_optim, inputs, outputs, lam):
     return gen_loss
 
 
-def visualize(epoch, gen, datasets, log_dir=None, device=None):
+def visualize(epoch, gen, val_dataloader, log_dir=None, device=None):
     """
     visualize generator images
     Parmameters
     -------------------
     epoch: int
         number of epochs
+
     gen: torch.nn.Module
         generator model
-    nrow: int
-    ncol: int
+
+    val_dataloader: torch.utils.data.DataLoader
+        dataloader for val 
+
     log_dir: pathlib.Path
         path to output directory
     device: torch.device
@@ -209,12 +237,14 @@ def visualize(epoch, gen, datasets, log_dir=None, device=None):
         pre = path
 
     with torch.no_grad():
-        z = gen.make_hidden(nrow*ncol).to(device)
-        # Generatorでサンプル生成
-        samples = gen(z).cpu()
-    np.random.seed()
+        for inputs, _ in val_dataloader:
+            fake_outputs = gen(inputs).cpu()
 
-    images = torchvision.utils.make_grid(samples, normalize=True, nrow=nrow)
+    total = fake_outputs.shape[0]
+    ncol = int(math.sqrt(total))
+    nrow = math.ceil(float(total)/ncol)
+    images = torchvision.utils.make_grid(
+        fake_outputs, normalize=True, nrow=nrow, padding=1)
     plt.imshow(images.numpy().transpose(1, 2, 0), cmap=plt.cm.gray)
     plt.axis("off")
     plt.title("Epoch: {}".format(epoch))
