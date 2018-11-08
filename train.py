@@ -50,37 +50,38 @@ def train_pix2pix(models, datasets, optimizers,
     dataset_sizes = {phase: len(datasets[phase]) for phase in phases}
     # train loop
     since = datetime.datetime.now()
-    [for model in models.item]
+
+    for model in models.values():
+        model.to(device)
+        model.train()  # apply Dropout and BatchNorm during both training and inference
+
     for epoch in epochs:
-        for phase in phases:
-            iteration = tqdm(dataloader,
-                             desc="Iteration",
-                             unit='iter')
-            epoch_dis_loss = 0.0
-            epoch_gen_loss = 0.0
-            for inputs, outputs in iteration:
-                inputs = inputs.to(device)
-                outputs = outputs.to(device)
-                assert ((inputs > -1) * (inputs < 1)
-                        ).all(), "input data to discriminator range is not from -1 to 1"
-                ########################################################
-                # (1) Update D network: minimize - 1/ 2 {1/N * log(D(x, y)) + 1/N * log(1 - D(x, G(x, z)))}
-                # minimize - 1/2N * {softplus(-D(x, y)) + softplus(D(x, y))}
-                ######################################################
-                dis_loss = train_dis(models, optimizers['discriminator'],
-                                     inputs, outputs, labels, criterion)
-                #######################################################
-                # (2) Update G netwrk: minimize - 1/N * log(D(x, G(x, z))) + 1/N * lambda * |y - G(x, z)|
-                # minimize - 1/N { softplus(-D(x, G(x, z))) + lambda * |y - G(x, z)|}
-                ######################################################
-                fake_labels = torch.ones_like(
-                    fake_labels, device=device)
-                gen_loss = train_gen(
-                    models, optimizers['generator'],
-                    inputs, fake_labels, criterion)
-                # statistics
-                epoch_dis_loss += dis_loss.item() * inputs.size()[0]
-                epoch_gen_loss += gen_loss.item() * inputs.size()[0]
+        iteration = tqdm(dataloader['train'],
+                         desc="Iteration",
+                         unit='iter')
+        epoch_dis_loss = 0.0
+        epoch_gen_loss = 0.0
+        for inputs, outputs in iteration:
+            inputs = inputs.to(device)
+            outputs = outputs.to(device)
+            assert ((inputs > -1) * (inputs < 1)
+                    ).all(), "input data to discriminator range is not from -1 to 1"
+            ########################################################
+            # (1) Update D network: minimize - 1/ 2 {1/N * log(D(x, y)) + 1/N * log(1 - D(x, G(x, z)))}
+            # minimize - 1/2N * {softplus(-D(x, y)) + softplus(D(x, y))}
+            ######################################################
+            dis_loss = train_dis(models, optimizers['discriminator'],
+                                 inputs, outputs, labels, criterion)
+            #######################################################
+            # (2) Update G netwrk: minimize - 1/N * log(D(x, G(x, z))) + 1/N * lambda * |y - G(x, z)|
+            # minimize - 1/N { softplus(-D(x, G(x, z))) + lambda * |y - G(x, z)|}
+            ######################################################
+            gen_loss = train_gen(
+                models, optimizers['generator'],
+                inputs, fake_labels, criterion)
+            # statistics
+            epoch_dis_loss += dis_loss.item() * inputs.size()[0]
+            epoch_gen_loss += gen_loss.item() * inputs.size()[0]
 
         # print loss
         epoch_dis_loss /= dataset_sizes
@@ -117,10 +118,8 @@ def train_dis(models, dis_optim, inputs, outputs):
     dis_loss: torch.Tensor
         discriminator loss
     """
-    gen, dis = models['generator'], models['discriminator']
+    gen, dis = models['gen'], models['dis']
 
-    # train disctiminator
-    dis.train()
     # zero the parameters gradientsreal
     dis_optim.zero_grad()
 
@@ -165,9 +164,7 @@ def train_gen(models, gen_optim, inputs, outputs, lam):
     gen_loss: torch.Tensor
         generator loss
     """
-    gen, dis = models['generator'], models['discriminator']
-    # train generator
-    gen.train()
+    gen, dis = models['gen'], models['dis']
     # zero the parameter gradientsreal
     gen_optim.zero_grad()
     outputs_fake = gen(inputs)
@@ -184,7 +181,7 @@ def train_gen(models, gen_optim, inputs, outputs, lam):
     return gen_loss
 
 
-def visualize(epoch, gen, nrow=7, ncol=7, log_dir=None, device=None):
+def visualize(epoch, gen, datasets, log_dir=None, device=None):
     """
     visualize generator images
     Parmameters
@@ -199,7 +196,9 @@ def visualize(epoch, gen, nrow=7, ncol=7, log_dir=None, device=None):
         path to output directory
     device: torch.device
     """
-    gen.eval()
+    gen.train()  # apply Dropout and BatchNorm during inference as well
+
+    # make dir
     pre = pathlib.Path(log_dir.parts[0])
     for i, path in enumerate(log_dir.parts):
         path = pathlib.Path(path)
@@ -209,8 +208,6 @@ def visualize(epoch, gen, nrow=7, ncol=7, log_dir=None, device=None):
             pre.mkdir()
         pre = path
 
-    # 生成のもとになる乱数を生成
-    np.random.seed(seed=0)
     with torch.no_grad():
         z = gen.make_hidden(nrow*ncol).to(device)
         # Generatorでサンプル生成
