@@ -52,7 +52,9 @@ def visualize(epoch, gen, val_dataloader, log_dir=None, device=None):
     plt.imshow(images.numpy().transpose(1, 2, 0))
     plt.axis("off")
     plt.title("Epoch: {}".format(epoch))
-    plt.savefig(log_dir / "epoch{}.png".format(epoch))
+    plt.tight_layout()
+    plt.savefig(log_dir / "epoch{}.png".format(epoch),
+                bbox_inches="tight", pad_inches=0.05)
 
 
 class ComposeTwoIMG(object):
