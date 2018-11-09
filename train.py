@@ -1,16 +1,12 @@
 import pathlib
 import datetime
+from collections import OrderedDict
 from tqdm import tqdm
 import torch
-import torch.nn as nn
-import torch.optim as optim
 import torch.nn.functional as F
 import torchvision
-from torchvision import transforms
-import matplotlib.pyplot as plt
-from collections import OrderedDict
 import json
-import math
+from utils import visualize
 
 
 def train_pix2pix(models, datasets, optimizers, lam,
@@ -54,11 +50,20 @@ def train_pix2pix(models, datasets, optimizers, lam,
     # construct dataloader
     train_dataloader = torch.utils.data.DataLoader(datasets['train'], batch_size=batch_size,
                                                    shuffle=True, num_workers=num_workers)
+    print("bs:", len(datasets['val']))
     val_dataloader = torch.utils.data.DataLoader(datasets['val'], batch_size=len(datasets['val']),
                                                  shuffle=False, num_workers=num_workers)
     dataset_sizes = {phase: len(datasets[phase]) for phase in phases}
     # train loop
     since = datetime.datetime.now()
+
+    # make dir to save model & image
+    model_dir = out / "model"
+    if not model_dir.exists():
+        model_dir.mkdir()
+    image_dir = out / "gen_image"
+    if not image_dir.exists():
+        image_dir.mkdir()
 
     for model in models.values():
         model.to(device)
@@ -73,8 +78,8 @@ def train_pix2pix(models, datasets, optimizers, lam,
         for inputs, outputs in iteration:
             inputs = inputs.to(device)
             outputs = outputs.to(device)
-            assert ((inputs > -1) * (inputs < 1)
-                    ).all(), "input data to discriminator range is not from -1 to 1"
+            assert ((-1 <= outputs) * (outputs <= 1)
+                    ).all(), "input data to discriminator range is not from -1 to 1. Got: {}".format((outputs.min(), outputs.max()))
             ########################################################
             # (1) Update D network: minimize - 1/ 2 {1/N * log(D(x, y)) + 1/N * log(1 - D(x, G(x, z)))}
             # minimize - 1/2N * {softplus(-D(x, y)) + softplus(D(x, y))}
@@ -106,19 +111,23 @@ def train_pix2pix(models, datasets, optimizers, lam,
         torch.save({
             'epoch': epoch,
             'dis_model_state_dict': models['dis'].state_dict(),
-            'gen_model_state_dict': models['gen'].statedict(),
+            'gen_model_state_dict': models['gen'].state_dict(),
             'dis_optim_state_dict': optimizers['dis'].state_dict(),
             'gen_optim_state_dict': optimizers['gen'].state_dict(),
             'dis_loss': epoch_dis_loss,
             'gen_loss': epoch_gen_loss,
-        }, out / 'pix2pix_{}epoch.tar'.format(epoch+1))
+        }, model_dir / 'pix2pix_{}epoch.tar'.format(epoch+1))
 
         # generate fake image
         visualize(epoch, models['gen'], val_dataloader=val_dataloader,
-                  log_dir=out, device=device)
+                  log_dir=image_dir, device=device)
 
     time_elapsed = datetime.datetime.now() - since
     tqdm.write('Training complete in {}'.format(time_elapsed))
+
+    # save log
+    with open(out / "log.json", "w") as f:
+        json.dump(log, f, indent=4, separators=(',', ': '))
 
 
 def train_dis(models, dis_optim, inputs, outputs):
@@ -204,48 +213,3 @@ def train_gen(models, gen_optim, inputs, outputs, lam):
     gen_optim.step()
 
     return gen_loss
-
-
-def visualize(epoch, gen, val_dataloader, log_dir=None, device=None):
-    """
-    visualize generator images
-    Parmameters
-    -------------------
-    epoch: int
-        number of epochs
-
-    gen: torch.nn.Module
-        generator model
-
-    val_dataloader: torch.utils.data.DataLoader
-        dataloader for val 
-
-    log_dir: pathlib.Path
-        path to output directory
-    device: torch.device
-    """
-    gen.train()  # apply Dropout and BatchNorm during inference as well
-
-    # make dir
-    pre = pathlib.Path(log_dir.parts[0])
-    for i, path in enumerate(log_dir.parts):
-        path = pathlib.Path(path)
-        if i != 0:
-            pre /= path
-        if not pre.exists():
-            pre.mkdir()
-        pre = path
-
-    with torch.no_grad():
-        for inputs, _ in val_dataloader:
-            fake_outputs = gen(inputs).cpu()
-
-    total = fake_outputs.shape[0]
-    ncol = int(math.sqrt(total))
-    nrow = math.ceil(float(total)/ncol)
-    images = torchvision.utils.make_grid(
-        fake_outputs, normalize=True, nrow=nrow, padding=1)
-    plt.imshow(images.numpy().transpose(1, 2, 0), cmap=plt.cm.gray)
-    plt.axis("off")
-    plt.title("Epoch: {}".format(epoch))
-    plt.savefig(log_dir / "epoch{}.png".format(epoch))

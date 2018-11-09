@@ -1,40 +1,259 @@
+import random
+import math
 import numpy as np
 import cv2
+from torch.utils.data import Dataset
 import torch
+import matplotlib.pyplot as plt
+import torchvision
+from opencv_transforms import Resize, RandomHorizontalFlip, ToTensor, Normalize
+import opencv_functional as F
+
+
+def visualize(epoch, gen, val_dataloader, log_dir=None, device=None):
+    """
+    visualize generator images
+    Parmameters
+    -------------------
+    epoch: int
+        number of epochs
+
+    gen: torch.nn.Module
+        generator model
+
+    val_dataloader: torch.utils.data.DataLoader
+        dataloader for val 
+
+    log_dir: pathlib.Path
+        path to output directory
+    device: torch.device
+    """
+    gen.train()  # apply Dropout and BatchNorm during inference as well
+
+    # # make dir
+    # pre = pathlib.Path(log_dir.parts[0])
+    # for i, path in enumerate(log_dir.parts):
+    #     path = pathlib.Path(path)
+    #     if i != 0:
+    #         pre /= path
+    #     if not pre.exists():
+    #         pre.mkdir()
+    #     pre = path
+
+    with torch.no_grad():
+        for inputs, _ in val_dataloader:
+            fake_outputs = gen(inputs.to(device)).cpu()
+
+    total = fake_outputs.shape[0]
+    ncol = int(math.sqrt(total))
+    nrow = math.ceil(float(total)/ncol)
+    images = torchvision.utils.make_grid(
+        fake_outputs, normalize=True, nrow=nrow, padding=1)
+    plt.imshow(images.numpy().transpose(1, 2, 0))
+    plt.axis("off")
+    plt.title("Epoch: {}".format(epoch))
+    plt.savefig(log_dir / "epoch{}.png".format(epoch))
+
+
+class ComposeTwoIMG(object):
+    """Composes several transforms together.
+    Args:
+        transforms (list of ``Transform`` objects): list of transforms to compose.
+    """
+
+    def __init__(self, transforms):
+        self.transforms = transforms
+
+    def __call__(self, input_A, input_B):
+        """
+        transform two images.
+        """
+        for t in self.transforms:
+            input_A, input_B = t(input_A, input_B)
+        return input_A, input_B
 
 
 class SplitImage(object):
-    """Split the image(torch.Tensor) to separete it into input:A, output:B
+    """Split the image into half, to separete it into input:A, output
 
-    Parameers
-    --------------
-    location: int
-        location of boundary line to separete image into input:A, output:B
+    Parameter:
+    ----------------------
+    right_is_A: bool
+        whether right is input image A.
     """
 
-    def __init__(self, location):
-        self.location = location
+    def __init__(self, right_is_A=True):
+        self.right_is_A = right_is_A
 
     def __call__(self, sample):
         """Split torch.Tensor
 
         Paramaeters
         ----------------
-        sample: torch.Tensor
-            torch.Tensor that represents images, of which format is (N, C, H, W)
+        sample: ndarray
+            image of which format is (H, W, C)
         """
-        # In case of tuple, suppose (images, labels)
-        if isinstance(sample, tuple):
-            images, _ = sample
-        else:
-            images = sample
+        _, w, _ = sample.shape
 
         assert isinstance(
-            images, torch.Tensor), "inputs image is not torch.Tensor. Got {}".format(type(images))
+            sample, np.ndarray), "inputs image is not np.ndarray. Got {}".format(type(images))
+        if self.right_is_A:
+            return sample[:, int(w/2):, :], sample[:, 0:int(w/2), :]
+        else:
+            return sample[:, 0:int(w/2), :], sample[:, int(w/2):, :]
 
-        _, _, _, w = images.shape
 
-        inputs_A = images[:, :, 0:int(w/2), :]
-        outputs_B = images[:, :, int(w/2)+1:w, :]
+class ResizeTwoIMG(Resize):
+    """
+    Resize two images to size.
+    """
 
-        return inputs_A, outputs_B
+    def __call__(self, input_A, output_B):
+        """
+        Parameter
+        ----------------
+        input_A: numpy.ndarray
+
+        output_B: numpy.ndarray
+        """
+
+        return F.resize(input_A, self.size, self.interpolation), F.resize(output_B, self.size, self.interpolation)
+
+
+class RandHFlipTwoIMG(RandomHorizontalFlip):
+    """Horizontally flip the given two numpy Image randomly with a given probability.
+    """
+
+    def __call__(self, input_A, output_B):
+        """
+        Parameter
+        ----------------
+        input_A: numpy.ndarray
+
+        output_B: numpy.ndarray
+
+        Returns:
+            numpy ndarray: Randomly flipped image.
+        """
+        if random.random() < self.p:
+            return F.hflip(input_A), F.hflip(output_B)
+        return input_A, output_B
+
+
+class RandomCropTwoIMG(object):
+    """Crop the given numpy ndarray at a random location.
+    Args:
+        size (sequence or int): Desired output size of the crop. If size is an
+            int instead of sequence like (h, w), a square crop (size, size) is
+            made.
+    """
+
+    def __init__(self, size):
+        if isinstance(size, int):
+            self.size = (size, size)
+        else:
+            self.size = size
+
+    @staticmethod
+    def get_params(img, output_size):
+        """Get parameters for ``crop`` for a random crop.
+        Args:
+            img (numpy ndarray): Image to be cropped.
+            output_size (tuple): Expected output size of the crop.
+        Returns:
+            tuple: params (i, j, h, w) to be passed to ``crop`` for random crop.
+        """
+        h, w = img.shape[0:2]
+        th, tw = output_size
+        if w == tw and h == th:
+            return 0, 0, h, w
+
+        i = random.randint(0, h - th)
+        j = random.randint(0, w - tw)
+        return i, j, th, tw
+
+    def __call__(self, input_A, output_B):
+        """
+        Parameter
+        ----------------
+        input_A: numpy.ndarray
+
+        output_B: numpy.ndarray
+
+        Returns:
+            numpy ndarray: Randomly flipped image.
+        """
+        # assert input_A.shape != output_B.shape, "input:A size is not same as output_B. input_A:{} output_B:{}".format(
+        #     input_A.shape, output_B.shape)
+
+        i, j, h, w = self.get_params(input_A, self.size)
+
+        return F.crop(input_A, i, j, h, w), F.crop(output_B, i, j, h, w)
+
+
+class ToTensorTwoIMG(ToTensor):
+    """Convert a two images to tensor.
+    """
+
+    def __call__(self, input_A, output_B):
+        """
+        Parameter
+        ----------------
+        input_A: numpy.ndarray
+
+        output_B: numpy.ndarray
+
+        Returns:
+            numpy ndarray: Randomly flipped image.
+        """
+        return F.to_tensor(input_A), F.to_tensor(output_B)
+
+
+def default_loader(path):
+    # return cv2.imread(str(path))
+    return cv2.cvtColor(cv2.imread(str(path)), cv2.COLOR_BGR2RGB)
+
+
+class ABImageDataset(Dataset):
+    """
+    A(simpler), B(more complicated) image dataset.
+
+    Parameters
+    -----------------------------
+    root: pathlib.PosixPath
+        data dir
+
+    transfor: torchvision.transform.Compose
+    """
+
+    def __init__(self, root, transform=None, loader=default_loader,
+                 spliter=SplitImage(), normalizer=Normalize(mean=[127.5, 127.5, 127.5], std=[127.5, 127.5, 127.5]),
+                 val_size=None):
+        if not root.is_absolute():
+            self.abs_data_dir = root.resolve()
+        else:
+            self.abs_data_dir = root
+        if val_size:
+            self.data_path = [path for i, path in enumerate(
+                self.abs_data_dir.glob("*.jpg")) if i < val_size]
+        else:
+            self.data_path = [path for path in self.abs_data_dir.glob("*.jpg")]
+        self.loader = loader
+        self.spliter = spliter
+        self.normalizer = normalizer
+        self.transform = transform
+
+    def __getitem__(self, idx):
+        image = self.loader(self.data_path[idx])
+        input_A, output_B = self.spliter(image)
+
+        if self.transform:
+            input_A, output_B = self.transform(input_A, output_B)
+
+        # apply normalization to output_B only
+        if self.normalizer:
+            return input_A, self.normalizer(output_B)
+        return input_A, output_B
+
+    def __len__(self):
+        return len(self.data_path)

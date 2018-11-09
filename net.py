@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.nn import init
 
 
-def weights_init(m, gain):
+def weights_init(m, gain=0.02):
     """
     Initialize
 
