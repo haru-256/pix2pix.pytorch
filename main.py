@@ -1,4 +1,3 @@
-
 import argparse
 import pathlib
 import torch
@@ -6,7 +5,9 @@ import torch.optim as optim
 from torchvision import datasets
 from train import train_pix2pix
 from net import UnetGenerator, PatchDiscriminator, weights_init
-from utils import ABImageDataset, RandHFlipTwoIMG, RandomCropTwoIMG, ResizeTwoIMG, ToTensorTwoIMG, ComposeTwoIMG, Normalize
+from utils import ABImageDataset, RandHFlipTwoIMG, RandomCropTwoIMG
+from utils import ResizeTwoIMG, ToTensorTwoIMG, ComposeTwoIMG, Normalize
+
 
 if __name__ == '__main__':
     # make parser
@@ -125,4 +126,5 @@ if __name__ == '__main__':
         len(datasets['train']), len(datasets['val'])))
 
     train_pix2pix(models, datasets, optimizers=optimizers, lam=opt.lambda_L1,
-                  num_epochs=opt.epoch, batch_size=opt.batch_size, device=device, out=out, num_workers=opt.num_workers)
+                  num_epochs=opt.epoch, batch_size=opt.batch_size, device=device,
+                  out=out, num_workers=opt.num_workers)

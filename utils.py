@@ -30,16 +30,6 @@ def visualize(epoch, gen, val_dataloader, log_dir=None, device=None):
     """
     gen.train()  # apply Dropout and BatchNorm during inference as well
 
-    # # make dir
-    # pre = pathlib.Path(log_dir.parts[0])
-    # for i, path in enumerate(log_dir.parts):
-    #     path = pathlib.Path(path)
-    #     if i != 0:
-    #         pre /= path
-    #     if not pre.exists():
-    #         pre.mkdir()
-    #     pre = path
-
     with torch.no_grad():
         for inputs, _ in val_dataloader:
             fake_outputs = gen(inputs.to(device)).cpu()
