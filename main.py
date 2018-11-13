@@ -5,7 +5,7 @@ import torch.optim as optim
 from torchvision import datasets
 from train import train_pix2pix
 from net import UnetGenerator, PatchDiscriminator, weights_init
-from utils import ABImageDataset, RandHFlipTwoIMG, RandomCropTwoIMG
+from utils import ABImageDataset, RandHFlipTwoIMG, RandomCropTwoIMG, SplitImage
 from utils import ResizeTwoIMG, ToTensorTwoIMG, ComposeTwoIMG, Normalize
 
 
@@ -80,6 +80,10 @@ if __name__ == '__main__':
     # path to data directory
     train_data_dir = pathlib.Path('../data/pix2pix/facades/train').resolve()
     val_data_dir = pathlib.Path('../data/pix2pix/facades/val').resolve()
+    # edges2shoes
+    train_data_dir = pathlib.Path(
+        '../data/pix2pix/edges2shoes/train').resolve()
+    val_data_dir = pathlib.Path('../data/pix2pix/edges2shoes/val').resolve()
     # transform
     transform = {
         'train': ComposeTwoIMG([
@@ -96,9 +100,9 @@ if __name__ == '__main__':
     std = [opt.std, opt.std, opt.std]
     datasets = {
         'train': ABImageDataset(root=train_data_dir, transform=transform['train'],
-                                normalizer=Normalize(mean, std)),
+                                normalizer=Normalize(mean, std), spliter=SplitImage(right_is_A=False)),
         'val': ABImageDataset(root=val_data_dir, transform=transform['val'],
-                              val_size=9, normalizer=Normalize(mean, std))
+                              val_size=9, normalizer=Normalize(mean, std), spliter=SplitImage(right_is_A=False))
     }
 
     # build model gen, dis

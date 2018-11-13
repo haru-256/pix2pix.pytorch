@@ -50,7 +50,6 @@ def train_pix2pix(models, datasets, optimizers, lam,
     # construct dataloader
     train_dataloader = torch.utils.data.DataLoader(datasets['train'], batch_size=batch_size,
                                                    shuffle=True, num_workers=num_workers)
-    print("bs:", len(datasets['val']))
     val_dataloader = torch.utils.data.DataLoader(datasets['val'], batch_size=len(datasets['val']),
                                                  shuffle=False, num_workers=num_workers)
     dataset_sizes = {phase: len(datasets[phase]) for phase in phases}
