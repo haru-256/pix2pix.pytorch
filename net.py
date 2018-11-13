@@ -244,7 +244,7 @@ class PatchDiscriminator(nn.Module):
     Parameters
     ----------------------
     ndf: int
-       the number of dis filters in first conv layer 
+       the number of dis filters in first conv layer
     """
 
     def __init__(self, ndf=64):
