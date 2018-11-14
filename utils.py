@@ -43,7 +43,7 @@ def visualize(epoch, gen, val_dataloader, log_dir=None, device=None):
     plt.axis("off")
     plt.title("Epoch: {}".format(epoch))
     plt.tight_layout()
-    plt.savefig(log_dir / "epoch{}.png".format(epoch),
+    plt.savefig(log_dir / "epoch{:0>4}.png".format(epoch),
                 bbox_inches="tight", pad_inches=0.05)
 
 
