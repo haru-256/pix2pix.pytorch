@@ -90,17 +90,22 @@ class Encoder(nn.Module):
     Encoder of U-Net
     """
 
-    def __init__(self, ngf=64):
+    def __init__(self, ngf=64, norm_type="instance"):
         super(Encoder, self).__init__()
 
         self.encoder = nn.Sequential(
             EncoderBlock(in_c=3, out_c=ngf, norm_type=None),  # C64
-            EncoderBlock(in_c=ngf, out_c=2*ngf),  # C128
-            EncoderBlock(in_c=ngf*2, out_c=ngf*4),  # C256
-            EncoderBlock(in_c=ngf*4, out_c=ngf*8),  # C512
-            EncoderBlock(in_c=ngf*8, out_c=ngf*8),  # C512
-            EncoderBlock(in_c=ngf*8, out_c=ngf*8),  # C512
-            EncoderBlock(in_c=ngf*8, out_c=ngf*8),  # C512
+            EncoderBlock(in_c=ngf, out_c=2*ngf, norm_type=norm_type),  # C128
+            EncoderBlock(in_c=ngf*2, out_c=ngf*4,
+                         norm_type=norm_type),  # C256
+            EncoderBlock(in_c=ngf*4, out_c=ngf*8,
+                         norm_type=norm_type),  # C512
+            EncoderBlock(in_c=ngf*8, out_c=ngf*8,
+                         norm_type=norm_type),  # C512
+            EncoderBlock(in_c=ngf*8, out_c=ngf*8,
+                         norm_type=norm_type),  # C512
+            EncoderBlock(in_c=ngf*8, out_c=ngf*8,
+                         norm_type=norm_type),  # C512
             EncoderBlock(in_c=ngf*8, out_c=ngf*8, norm_type=None)  # C512)
         )
 
@@ -177,17 +182,23 @@ class Decoder(nn.Module):
     Decoder of U-Net
     """
 
-    def __init__(self, ngf=64):
+    def __init__(self, ngf=64, norm_type='batch'):
         super(Decoder, self).__init__()
 
         self.decoder = nn.Sequential(
-            DecoderBlock(in_c=ngf*8, out_c=ngf*8),  # CD512
-            DecoderBlock(in_c=ngf*16, out_c=ngf*8),  # CD512
-            DecoderBlock(in_c=ngf*16, out_c=ngf*8),  # CD512
-            DecoderBlock(in_c=ngf*16, out_c=ngf*8),  # CD512
-            DecoderBlock(in_c=ngf*16, out_c=ngf*4),  # CD256
-            DecoderBlock(in_c=ngf*8, out_c=ngf*2),  # CD128
-            DecoderBlock(in_c=ngf*4, out_c=ngf),  # CD64
+            DecoderBlock(in_c=ngf*8, out_c=ngf*8,
+                         norm_type=norm_type),  # CD512
+            DecoderBlock(in_c=ngf*16, out_c=ngf*8,
+                         norm_type=norm_type),  # CD512
+            DecoderBlock(in_c=ngf*16, out_c=ngf*8,
+                         norm_type=norm_type),  # CD512
+            DecoderBlock(in_c=ngf*16, out_c=ngf*8,
+                         norm_type=norm_type),  # CD512
+            DecoderBlock(in_c=ngf*16, out_c=ngf*4,
+                         norm_type=norm_type),  # CD256
+            DecoderBlock(in_c=ngf*8, out_c=ngf*2,
+                         norm_type=norm_type),  # CD128
+            DecoderBlock(in_c=ngf*4, out_c=ngf, norm_type=norm_type),  # CD64
             nn.ConvTranspose2d(in_channels=ngf*2, out_channels=3,
                                kernel_size=4, stride=2, padding=1),  # 論文ではConvolutionとしているがおそらく間違い
             nn.Tanh()
@@ -221,11 +232,11 @@ class UnetGenerator(nn.Module):
         the number of gen filters in first conv layer
     """
 
-    def __init__(self, ngf=64):
+    def __init__(self, ngf=64, norm_type='batch'):
         super(UnetGenerator, self).__init__()
 
-        self.encoder = Encoder(ngf=ngf)
-        self.decoder = Decoder(ngf=ngf)
+        self.encoder = Encoder(ngf=ngf, norm_type=norm_type)
+        self.decoder = Decoder(ngf=ngf, norm_type=norm_type)
 
     def forward(self, x):
         # Encode
@@ -247,13 +258,14 @@ class PatchDiscriminator(nn.Module):
        the number of dis filters in first conv layer
     """
 
-    def __init__(self, ndf=64):
+    def __init__(self, ndf=64, norm_type='instance'):
         super(PatchDiscriminator, self).__init__()
 
         self.c1 = EncoderBlock(in_c=3+3, out_c=ndf, norm_type=None)
-        self.c2 = EncoderBlock(in_c=ndf, out_c=ndf*2)
-        self.c3 = EncoderBlock(in_c=ndf*2, out_c=ndf*4)
-        self.c4 = EncoderBlock(in_c=ndf*4, out_c=ndf*8, stride=1)
+        self.c2 = EncoderBlock(in_c=ndf, out_c=ndf*2, norm_type=norm_type)
+        self.c3 = EncoderBlock(in_c=ndf*2, out_c=ndf*4, norm_type=norm_type)
+        self.c4 = EncoderBlock(in_c=ndf*4, out_c=ndf*8,
+                               stride=1, norm_type=norm_type)
         self.c5 = nn.Conv2d(in_channels=ndf*8, out_channels=1,
                             kernel_size=4, padding=1, stride=1)
 

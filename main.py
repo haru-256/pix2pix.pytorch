@@ -85,11 +85,18 @@ if __name__ == '__main__':
         '../data/pix2pix/edges2shoes/train').resolve()
     val_data_dir = pathlib.Path('../data/pix2pix/edges2shoes/val').resolve()
     # transform
+    # transform = {
+    #     'train': ComposeTwoIMG([
+    #         ResizeTwoIMG(286),
+    #         RandHFlipTwoIMG(p=0.5),
+    #         RandomCropTwoIMG(256),
+    #         ToTensorTwoIMG()
+    #     ]),
+    #     'val': ComposeTwoIMG([
+    #         ToTensorTwoIMG()])
+    # }
     transform = {
         'train': ComposeTwoIMG([
-            ResizeTwoIMG(286),
-            RandHFlipTwoIMG(p=0.5),
-            RandomCropTwoIMG(256),
             ToTensorTwoIMG()
         ]),
         'val': ComposeTwoIMG([
@@ -107,9 +114,11 @@ if __name__ == '__main__':
 
     # build model gen, dis
     models = {
-        'gen': UnetGenerator(ngf=opt.ngf),
-        'dis': PatchDiscriminator(ndf=opt.ndf)
+        'gen': UnetGenerator(ngf=opt.ngf, norm_type=opt.norm_type),
+        'dis': PatchDiscriminator(ndf=opt.ndf, norm_type=opt.norm_type)
     }
+    print("U-Net:\n", models['gen'])
+    print("Discriminator:\n", models['dis'])
     # initialize models parameters
     for model in models.values():
         model.apply(weights_init)
