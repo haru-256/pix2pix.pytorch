@@ -28,8 +28,8 @@ if __name__ == '__main__':
                         type=int, default=100)
     parser.add_argument('-bs', '--batch_size', help='batch size. defalut value is 128',
                         type=int, default=1)
-    parser.add_argument('-vs', '--val_size', help='validation dataset size. defalut value is 10',
-                        type=float, default=0.15)
+    parser.add_argument('-vs', '--val_size', help='validation dataset size. defalut value is 16',
+                        type=int, default=16)
     parser.add_argument('-m', '--mean', help='mean to use for noarmalization',
                         type=float, default=0.5)
     parser.add_argument('-std', '--std', help='std to use for noarmalization',
@@ -43,6 +43,8 @@ if __name__ == '__main__':
                         choices=['batch', 'instance', 'none'], default='batch')
     parser.add_argument('--lambda_L1', type=float, default=100.0,
                         help='weight for L1 loss. default is 100')
+    parser.add_argument('--dataset', default='facade',
+                        choices=['facades', 'edges2shoes', 'edges2handbags'], help='what is datasets to use. default is "facades"')
     parser.add_argument('--num_workers', type=int, default=4,
                         help='num_worker for Dataloader')
     parser.add_argument('-g', '--gpu', help='specify gpu by this number. defalut value is 0,'
@@ -78,30 +80,30 @@ if __name__ == '__main__':
         device = torch.device("cpu")
 
     # path to data directory
-    train_data_dir = pathlib.Path('../data/pix2pix/facades/train').resolve()
-    val_data_dir = pathlib.Path('../data/pix2pix/facades/val').resolve()
-    # edges2shoes
     train_data_dir = pathlib.Path(
-        '../data/pix2pix/edges2shoes/train').resolve()
-    val_data_dir = pathlib.Path('../data/pix2pix/edges2shoes/val').resolve()
+        '../data/pix2pix/{}/train'.format(opt.dataset)).resolve()
+    val_data_dir = pathlib.Path(
+        '../data/pix2pix/{}/val'.format(opt.dataset)).resolve()
     # transform
-    # transform = {
-    #     'train': ComposeTwoIMG([
-    #         ResizeTwoIMG(286),
-    #         RandHFlipTwoIMG(p=0.5),
-    #         RandomCropTwoIMG(256),
-    #         ToTensorTwoIMG()
-    #     ]),
-    #     'val': ComposeTwoIMG([
-    #         ToTensorTwoIMG()])
-    # }
-    transform = {
-        'train': ComposeTwoIMG([
-            ToTensorTwoIMG()
-        ]),
-        'val': ComposeTwoIMG([
-            ToTensorTwoIMG()])
-    }
+    if opt.dataset == "facades":
+        transform = {
+            'train': ComposeTwoIMG([
+                ResizeTwoIMG(286),
+                RandHFlipTwoIMG(p=0.5),
+                RandomCropTwoIMG(256),
+                ToTensorTwoIMG()
+            ]),
+            'val': ComposeTwoIMG([
+                ToTensorTwoIMG()])
+        }
+    else:
+        transform = {
+            'train': ComposeTwoIMG([
+                ToTensorTwoIMG()
+            ]),
+            'val': ComposeTwoIMG([
+                ToTensorTwoIMG()])
+        }
     # load datasets
     mean = [opt.mean, opt.mean, opt.mean]
     std = [opt.std, opt.std, opt.std]
@@ -109,7 +111,7 @@ if __name__ == '__main__':
         'train': ABImageDataset(root=train_data_dir, transform=transform['train'],
                                 normalizer=Normalize(mean, std), spliter=SplitImage(right_is_A=False)),
         'val': ABImageDataset(root=val_data_dir, transform=transform['val'],
-                              val_size=9, normalizer=Normalize(mean, std), spliter=SplitImage(right_is_A=False))
+                              val_size=opt.val_size, normalizer=Normalize(mean, std), spliter=SplitImage(right_is_A=False))
     }
 
     # build model gen, dis
@@ -117,8 +119,8 @@ if __name__ == '__main__':
         'gen': UnetGenerator(ngf=opt.ngf, norm_type=opt.norm_type),
         'dis': PatchDiscriminator(ndf=opt.ndf, norm_type=opt.norm_type)
     }
-    print("U-Net:\n", models['gen'])
-    print("Discriminator:\n", models['dis'])
+    # print("U-Net:\n", models['gen'])
+    # print("Discriminator:\n", models['dis'])
     # initialize models parameters
     for model in models.values():
         model.apply(weights_init)
