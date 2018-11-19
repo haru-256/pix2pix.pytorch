@@ -88,7 +88,7 @@ class SplitImage(object):
         _, w, _ = sample.shape
 
         assert isinstance(
-            sample, np.ndarray), "inputs image is not np.ndarray. Got {}".format(type(images))
+            sample, np.ndarray), "inputs image is not np.ndarray. Got {}".format(type(sample))
         if self.right_is_A:
             return sample[:, int(w/2):, :], sample[:, 0:int(w/2), :]
         else:
