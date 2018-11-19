@@ -56,7 +56,7 @@ if __name__ == '__main__':
     # parse arguments
     opt = parser.parse_args()
     out = pathlib.Path(
-        "result_{0}/result_{0}_{1}".format(opt.number, opt.seed))
+        "{0}/result_{1}/result_{1}_{2}".format(opt.dataset, opt.number, opt.seed))
     # make directory
     pre = pathlib.Path(out.parts[0])
     for i, path in enumerate(out.parts):
