@@ -10,6 +10,41 @@ from opencv_transforms import Resize, RandomHorizontalFlip, ToTensor, Normalize
 import opencv_functional as F
 
 
+def plot_loss(log, path, colors=["tab:red", 'mediumblue'], markers=['o', 'x'], ms=10):
+    """
+    plot both generator loss and  discriminator loss
+
+    Parameters
+    ------------------
+    log: dict
+        dictionary hat contains generator loss, discriminator loss.
+
+    path: pathlib.Path
+        save file path
+    """
+    dis_loss = [log[key]['train_dis_loss'] for key in log.keys()]
+    gen_loss = [log[key]['train_gen_loss'] for key in log.keys()]
+    fig, ax = plt.subplots(1, 1, figsize=(10, 6), sharex=True)
+    _ = ax.plot(gen_loss, label='gen loss',
+                c=colors[0], marker=markers[0], ms=ms)
+    ax.grid(axis="y")
+    ax.set_xlim([-0.8, 15])
+    ax2 = ax.twinx()
+    _ = ax2.plot(dis_loss, label='dis loss',
+                 c=colors[0], marker=markers[0], ms=ms)
+    fig.legend(loc='upper right', bbox_to_anchor=(1, 0.5),
+               bbox_transform=ax.transAxes, frameon=True, shadow=True, fontsize=17)
+    ax.tick_params(labelsize=13)
+    ax2.tick_params(labelsize=13)
+    ax.set_xticklabels([2*i+1 for i in range(-1, len(dis_loss))])
+    ax.set_xlabel("epoch", fontsize=18, labelpad=13)
+    ax.set_ylabel("Gen Loss", fontsize=18, labelpad=13)
+    ax2.set_ylabel("Dis Loss", fontsize=18, labelpad=13)
+    plt.grid()
+    plt.tight_layout()
+    fig.savefig(path, dpi=300, bbox_inches='tight', pad_inches=0.1)
+
+
 def visualize(epoch, gen, val_dataloader, log_dir=None, device=None):
     """
     visualize generator images

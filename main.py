@@ -6,7 +6,7 @@ from torchvision import datasets
 from train import train_pix2pix
 from net import UnetGenerator, PatchDiscriminator, weights_init
 from utils import ABImageDataset, RandHFlipTwoIMG, RandomCropTwoIMG, SplitImage
-from utils import ResizeTwoIMG, ToTensorTwoIMG, ComposeTwoIMG, Normalize
+from utils import ResizeTwoIMG, ToTensorTwoIMG, ComposeTwoIMG, Normalize, plot_loss
 
 
 if __name__ == '__main__':
@@ -140,6 +140,7 @@ if __name__ == '__main__':
     print("train size: {} | val size: {}".format(
         len(datasets['train']), len(datasets['val'])))
 
-    train_pix2pix(models, datasets, optimizers=optimizers, lam=opt.lambda_L1,
-                  num_epochs=opt.epoch, batch_size=opt.batch_size, device=device,
-                  out=out, num_workers=opt.num_workers)
+    log = train_pix2pix(models, datasets, optimizers=optimizers, lam=opt.lambda_L1,
+                        num_epochs=opt.epoch, batch_size=opt.batch_size, device=device,
+                        out=out, num_workers=opt.num_workers)
+    plot_loss(log, out / 'loss_{}_{}.png'.format(opt.number, opt.seed))

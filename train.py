@@ -128,6 +128,8 @@ def train_pix2pix(models, datasets, optimizers, lam,
     with open(out / "log.json", "w") as f:
         json.dump(log, f, indent=4, separators=(',', ': '))
 
+    return log
+
 
 def train_dis(models, dis_optim, inputs, outputs):
     """
