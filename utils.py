@@ -45,7 +45,8 @@ def plot_loss(log, path, colors=["tab:red", 'mediumblue'], markers=['o', 'x'], m
     fig.savefig(path, dpi=300, bbox_inches='tight', pad_inches=0.1)
 
 
-def visualize(epoch, gen, val_dataloader, log_dir=None, device=None):
+def visualize(epoch, gen, val_dataloader, log_dir=None, device=None,
+              mean=127.5, std=127.5):
     """
     visualize generator images
     Parmameters
@@ -61,7 +62,14 @@ def visualize(epoch, gen, val_dataloader, log_dir=None, device=None):
 
     log_dir: pathlib.Path
         path to output directory
+
     device: torch.device
+
+    mean: float
+        mean that is used to normalize inputs data.
+
+    std: float
+        std that is used to normalize inputs data.
     """
     gen.train()  # apply Dropout and BatchNorm during inference as well
 
@@ -73,7 +81,12 @@ def visualize(epoch, gen, val_dataloader, log_dir=None, device=None):
     ncol = int(math.sqrt(total))
     nrow = math.ceil(float(total)/ncol)
     images = torchvision.utils.make_grid(
-        fake_outputs, normalize=True, nrow=nrow, padding=1)
+        fake_outputs, normalize=False, nrow=nrow, padding=1)
+    images = images * std + mean
+    assert ((-1 <= images) * (images <= 1)
+            ).all(), "plot data range"
+    " is not from 0 to 1. Got: {}".format(
+        (images.min(), images.max()))
     plt.imshow(images.numpy().transpose(1, 2, 0))
     plt.axis("off")
     plt.title("Epoch: {}".format(epoch))

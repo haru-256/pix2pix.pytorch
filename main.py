@@ -46,8 +46,6 @@ if __name__ == '__main__':
                         choices=['facades', 'edges2shoes', 'edges2handbags'], help='what is datasets to use. default is "facades"')
     parser.add_argument('--num_workers', type=int, default=4,
                         help='num_worker for Dataloader')
-    parser.add_argument('--right_is_A', help='whether right is A(input to Gen)',
-                        action='store_true')
     parser.add_argument('-g', '--gpu', help='specify gpu by this number. defalut value is 0,'
                         ' -1 is means don\'t use gpu',
                         choices=[-1, 0, 1], type=int, default=0)
@@ -58,15 +56,13 @@ if __name__ == '__main__':
     opt = parser.parse_args()
     out = pathlib.Path(
         "{0}/result_{1}/result_{1}_{2}".format(opt.dataset, opt.number, opt.seed))
+
     # make directory
-    pre = pathlib.Path(out.parts[0])
+    cdir = pathlib.Path('.').resolve()
     for i, path in enumerate(out.parts):
-        path = pathlib.Path(path)
-        if i != 0:
-            pre /= path
-        if not pre.exists():
-            pre.mkdir()
-        pre = path
+        cdir = cdir / path
+        if not cdir.exists():
+            cdir.mkdir()
 
     # put arguments into file
     with open(out / "args.txt", "w") as f:
@@ -97,6 +93,7 @@ if __name__ == '__main__':
             'val': ComposeTwoIMG([
                 ToTensorTwoIMG()])
         }
+        right_is_A = True
     else:
         transform = {
             'train': ComposeTwoIMG([
@@ -105,17 +102,18 @@ if __name__ == '__main__':
             'val': ComposeTwoIMG([
                 ToTensorTwoIMG()])
         }
+        right_is_A = False
     # load datasets
     mean = [opt.mean, opt.mean, opt.mean]
     std = [opt.std, opt.std, opt.std]
     datasets = {
         'train': ABImageDataset(root=train_data_dir, transform=transform['train'],
                                 normalizer=Normalize(mean, std),
-                                spliter=SplitImage(right_is_A=opt.right_is_A)),
+                                spliter=SplitImage(right_is_A=right_is_A)),
         'val': ABImageDataset(root=val_data_dir, transform=transform['val'],
                               val_size=opt.val_size, normalizer=Normalize(
                                   mean, std),
-                              spliter=SplitImage(right_is_A=opt.right_is_A))
+                              spliter=SplitImage(right_is_A=right_is_A))
     }
 
     # build model gen, dis
@@ -146,5 +144,5 @@ if __name__ == '__main__':
 
     log = train_pix2pix(models, datasets, optimizers=optimizers, lam=opt.lambda_L1,
                         num_epochs=opt.epoch, batch_size=opt.batch_size, device=device,
-                        out=out, num_workers=opt.num_workers)
+                        out=out, num_workers=opt.num_workers, opt=opt)
     plot_loss(log, out / 'loss_{}_{}.png'.format(opt.number, opt.seed))

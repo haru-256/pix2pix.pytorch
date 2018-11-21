@@ -10,7 +10,7 @@ from utils import visualize
 
 
 def train_pix2pix(models, datasets, optimizers, lam,
-                  num_epochs, batch_size, device, out, num_workers=2):
+                  num_epochs, batch_size, device, out, num_workers=2, opt=None):
     """
     the training function for pix2pix.
 
@@ -42,6 +42,9 @@ def train_pix2pix(models, datasets, optimizers, lam,
     num_workers: int
         how many subprocesses to use for data loading.
          0 means that the data will be loaded in the main process. (default: 2)
+
+    opt: NameSpace
+        arguments
     """
     epochs = tqdm(range(num_epochs), desc="Epoch", unit='epoch')
     phases = ['train', 'val']
@@ -118,8 +121,8 @@ def train_pix2pix(models, datasets, optimizers, lam,
         }, model_dir / 'pix2pix_{}epoch.tar'.format(epoch+1))
 
         # generate fake image
-        visualize(epoch, models['gen'], val_dataloader=val_dataloader,
-                  log_dir=image_dir, device=device)
+        visualize(epoch+1, models['gen'], val_dataloader=val_dataloader,
+                  log_dir=image_dir, device=device, mean=opt.mean, std=opt.std)
 
     time_elapsed = datetime.datetime.now() - since
     tqdm.write('Training complete in {}'.format(time_elapsed))
