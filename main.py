@@ -2,7 +2,6 @@ import argparse
 import pathlib
 import torch
 import torch.optim as optim
-from torchvision import datasets
 from train import train_pix2pix
 from net import UnetGenerator, PatchDiscriminator, weights_init
 from utils import ABImageDataset, RandHFlipTwoIMG, RandomCropTwoIMG, SplitImage
@@ -47,6 +46,8 @@ if __name__ == '__main__':
                         choices=['facades', 'edges2shoes', 'edges2handbags'], help='what is datasets to use. default is "facades"')
     parser.add_argument('--num_workers', type=int, default=4,
                         help='num_worker for Dataloader')
+    parser.add_argument('--right_is_A', help='whether right is A(input to Gen)',
+                        action='store_true')
     parser.add_argument('-g', '--gpu', help='specify gpu by this number. defalut value is 0,'
                         ' -1 is means don\'t use gpu',
                         choices=[-1, 0, 1], type=int, default=0)
@@ -109,9 +110,12 @@ if __name__ == '__main__':
     std = [opt.std, opt.std, opt.std]
     datasets = {
         'train': ABImageDataset(root=train_data_dir, transform=transform['train'],
-                                normalizer=Normalize(mean, std), spliter=SplitImage(right_is_A=False)),
+                                normalizer=Normalize(mean, std),
+                                spliter=SplitImage(right_is_A=opt.right_is_A)),
         'val': ABImageDataset(root=val_data_dir, transform=transform['val'],
-                              val_size=opt.val_size, normalizer=Normalize(mean, std), spliter=SplitImage(right_is_A=False))
+                              val_size=opt.val_size, normalizer=Normalize(
+                                  mean, std),
+                              spliter=SplitImage(right_is_A=opt.right_is_A))
     }
 
     # build model gen, dis

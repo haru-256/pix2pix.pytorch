@@ -217,9 +217,9 @@ class Decoder(nn.Module):
         # Decode
         hs_r = list(reversed(hs))
         h = self.decoder[0](hs_r[0])
-        for skip, block in zip(hs_r[1:], self.decoder[1:]):
+        for skip, block in zip(hs_r[1:], self.decoder[1:-1]):
             h = block(torch.cat((h, skip), dim=1))
-        return h
+        return self.decoder[-1](h)
 
 
 class UnetGenerator(nn.Module):

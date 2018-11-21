@@ -160,7 +160,12 @@ def train_dis(models, dis_optim, inputs, outputs):
 
     # forward
     outputs_fake = gen(inputs)
-    fake = dis(outputs_fake, inputs)
+    assert ((-1 <= outputs_fake) * (outputs_fake <= 1)
+            ).all(), "input data to discriminator range"
+    " is not from -1 to 1. Got: {}".format(
+        (outputs_fake.min(), outputs_fake.max()))
+    # stop backprop to the generator by detaching outputs_fake
+    fake = dis(outputs_fake.detach(), inputs)
     real = dis(outputs, inputs)
 
     # calc loss for discriminator
@@ -203,6 +208,10 @@ def train_gen(models, gen_optim, inputs, outputs, lam):
     # zero the parameter gradientsreal
     gen_optim.zero_grad()
     outputs_fake = gen(inputs)
+    assert ((-1 <= outputs_fake) * (outputs_fake <= 1)
+            ).all(), "input data to discriminator range"
+    " is not from -1 to 1. Got: {}".format(
+        (outputs_fake.min(), outputs_fake.max()))
     fake = dis(outputs_fake, inputs)
 
     # calc loss for generator
