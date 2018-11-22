@@ -2,6 +2,9 @@ import argparse
 import pathlib
 import torch
 import torch.optim as optim
+from torch.backends import cudnn
+import random
+import numpy as np
 from train import train_pix2pix
 from net import UnetGenerator, PatchDiscriminator, weights_init
 from utils import ABImageDataset, RandHFlipTwoIMG, RandomCropTwoIMG, SplitImage
@@ -56,6 +59,13 @@ if __name__ == '__main__':
     opt = parser.parse_args()
     out = pathlib.Path(
         "{0}/result_{1}/result_{1}_{2}".format(opt.dataset, opt.number, opt.seed))
+
+    # set seed
+    # cudnn.deterministic = True # don't use cudnn
+    random.seed(opt.seed)
+    np.random.seed(opt.seed)
+    torch.manual_seed(opt.seed)
+    torch.cuda.manual_seed(opt.seed)
 
     # make directory
     cdir = pathlib.Path('.').resolve()
