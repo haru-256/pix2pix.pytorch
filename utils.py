@@ -31,7 +31,7 @@ def plot_loss(log, path, colors=["tab:red", 'mediumblue'], markers=['o', 'x'], m
     ax.set_xlim([-0.8, 15])
     ax2 = ax.twinx()
     _ = ax2.plot(dis_loss, label='dis loss',
-                 c=colors[0], marker=markers[0], ms=ms)
+                 c=colors[1], marker=markers[1], ms=ms)
     fig.legend(loc='upper right', bbox_to_anchor=(1, 0.5),
                bbox_transform=ax.transAxes, frameon=True, shadow=True, fontsize=17)
     ax.tick_params(labelsize=13)
@@ -40,7 +40,6 @@ def plot_loss(log, path, colors=["tab:red", 'mediumblue'], markers=['o', 'x'], m
     ax.set_xlabel("epoch", fontsize=18, labelpad=13)
     ax.set_ylabel("Gen Loss", fontsize=18, labelpad=13)
     ax2.set_ylabel("Dis Loss", fontsize=18, labelpad=13)
-    plt.grid()
     plt.tight_layout()
     fig.savefig(path, dpi=300, bbox_inches='tight', pad_inches=0.1)
 
