@@ -7,6 +7,8 @@ import numpy as np
 import cv2
 from torch.utils.data import Dataset
 import torch
+import matplotlib as mpl
+mpl.use('Agg') # for ssh
 import matplotlib.pyplot as plt
 plt.style.use('seaborn-white')
 
