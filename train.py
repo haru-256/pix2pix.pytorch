@@ -107,7 +107,7 @@ def train_pix2pix(models, datasets, optimizers, lam,
         log["epoch_{}".format(epoch+1)] = OrderedDict(train_dis_loss=epoch_dis_loss,
                                                       train_gen_loss=epoch_gen_loss)
         tqdm.write('Epoch: {} GenLoss: {:.4f} DisLoss: {:.4f}'.format(
-            epoch, epoch_gen_loss, epoch_dis_loss))
+            epoch+1, epoch_gen_loss, epoch_dis_loss))
         tqdm.write("-"*60)
         # save model &  by epoch
         torch.save({
