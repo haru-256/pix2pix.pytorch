@@ -1,3 +1,6 @@
+import opencv_functional as F
+from opencv_transforms import Resize, RandomHorizontalFlip, ToTensor, Normalize
+import torchvision
 import random
 import math
 import numpy as np
@@ -5,9 +8,7 @@ import cv2
 from torch.utils.data import Dataset
 import torch
 import matplotlib.pyplot as plt
-import torchvision
-from opencv_transforms import Resize, RandomHorizontalFlip, ToTensor, Normalize
-import opencv_functional as F
+plt.style.use('seaborn-white')
 
 
 def plot_loss(log, path, colors=["tab:red", 'mediumblue'], markers=['o', 'x'], ms=10):
@@ -27,7 +28,7 @@ def plot_loss(log, path, colors=["tab:red", 'mediumblue'], markers=['o', 'x'], m
     fig, ax = plt.subplots(1, 1, figsize=(10, 6), sharex=True)
     _ = ax.plot(gen_loss, label='gen loss',
                 c=colors[0], marker=markers[0], ms=ms)
-    ax.grid(axis="y")
+    ax.grid(axis="x")
     ax.set_xlim([-0.8, 15])
     ax2 = ax.twinx()
     _ = ax2.plot(dis_loss, label='dis loss',
