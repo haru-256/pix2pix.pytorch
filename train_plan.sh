@@ -1,0 +1,5 @@
+#! /bin/bash
+
+for seed in $(seq 4 10); do
+    eval "python main.py -n 1 -s $seed -bs 4 --norm_type batch -g  -e 15 --dataset edges2shoes --num_workers 4" 
+done
