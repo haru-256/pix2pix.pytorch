@@ -58,7 +58,7 @@ if __name__ == '__main__':
     # parse arguments
     opt = parser.parse_args()
     out = pathlib.Path(
-        "{0}/result_{1}/result_{1}_{2}".format(opt.dataset, opt.number, opt.seed))
+        "{0}/result_{1}/result_{1}_{2}".format(opt.dataset, opt.number, opt.seed)).resolve()
 
     # set seed
     # cudnn.deterministic = True # don't use cudnn
@@ -69,10 +69,9 @@ if __name__ == '__main__':
 
     # make directory
     cdir = pathlib.Path('.').resolve()
-    for i, path in enumerate(out.parts):
-        cdir = cdir / path
-        if not cdir.exists():
-            cdir.mkdir()
+    for path in out.parents:
+        if not path.exists():
+            path.mkdir()
 
     # put arguments into file
     with open(out / "args.txt", "w") as f:
