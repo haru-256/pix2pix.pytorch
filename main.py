@@ -70,6 +70,7 @@ if __name__ == '__main__':
     # make directory
     cdir = pathlib.Path('.').resolve()
     for path in out.parents:
+        print(path)
         if not path.exists():
             path.mkdir()
 
