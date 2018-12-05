@@ -146,32 +146,33 @@ class DecoderBlock(nn.Module):
         whether aplly affine operation.
     """
 
-    def __init__(self, in_c, out_c, ks=4, stride=2, n_pd=1, norm_type='instance', isAffine=True):
+    def __init__(self, in_c, out_c, ks=4, stride=2, n_pd=1, norm_type='instance',
+                 isAffine=True, use_leaky=False):
         super(DecoderBlock, self).__init__()
-
         if norm_type == 'batch':
-            block = nn.Sequential(
+            block = [
                 nn.ConvTranspose2d(in_channels=in_c, out_channels=out_c,
                                    kernel_size=ks, stride=stride, padding=n_pd),
                 nn.BatchNorm2d(num_features=out_c, affine=isAffine),
-                nn.Dropout2d(p=0.5),
-                nn.ReLU())
+                nn.Dropout2d(p=0.5)]
         elif norm_type == 'instance':
-            block = nn.Sequential(
+            block = [
                 nn.ConvTranspose2d(in_channels=in_c, out_channels=out_c,
                                    kernel_size=ks, stride=stride, padding=n_pd),
                 nn.InstanceNorm2d(num_features=out_c,
                                   affine=isAffine, track_running_stats=False),
-                nn.Dropout2d(p=0.5),
-                nn.ReLU())
+                nn.Dropout2d(p=0.5), ]
         else:
-            block = nn.Sequential(
+            block = [
                 nn.ConvTranspose2d(in_channels=in_c, out_channels=out_c,
                                    kernel_size=ks, stride=stride, padding=n_pd),
-                nn.Dropout2d(p=0.5),
-                nn.ReLU())
+                nn.Dropout2d(p=0.5)]
+        if use_leaky:
+            block.append(nn.LeakyReLU(negative_slope=0.2))
+        else:
+            block.append(nn.ReLU())
 
-        self.block = block
+        self.block = nn.Sequential(*block)
 
     def forward(self, x):
         return self.block(x)
@@ -182,23 +183,24 @@ class Decoder(nn.Module):
     Decoder of U-Net
     """
 
-    def __init__(self, ngf=64, norm_type='batch'):
+    def __init__(self, ngf=64, norm_type='batch', use_leaky=False):
         super(Decoder, self).__init__()
 
         self.decoder = nn.Sequential(
             DecoderBlock(in_c=ngf*8, out_c=ngf*8,
-                         norm_type=norm_type),  # CD512
+                         norm_type=norm_type, use_leaky=use_leaky),  # CD512
             DecoderBlock(in_c=ngf*16, out_c=ngf*8,
-                         norm_type=norm_type),  # CD512
+                         norm_type=norm_type, use_leaky=use_leaky),  # CD512
             DecoderBlock(in_c=ngf*16, out_c=ngf*8,
-                         norm_type=norm_type),  # CD512
+                         norm_type=norm_type, use_leaky=use_leaky),  # CD512
             DecoderBlock(in_c=ngf*16, out_c=ngf*8,
-                         norm_type=norm_type),  # CD512
+                         norm_type=norm_type, use_leaky=use_leaky),  # CD512
             DecoderBlock(in_c=ngf*16, out_c=ngf*4,
-                         norm_type=norm_type),  # CD256
+                         norm_type=norm_type, use_leaky=use_leaky),  # CD256
             DecoderBlock(in_c=ngf*8, out_c=ngf*2,
-                         norm_type=norm_type),  # CD128
-            DecoderBlock(in_c=ngf*4, out_c=ngf, norm_type=norm_type),  # CD64
+                         norm_type=norm_type, use_leaky=use_leaky),  # CD128
+            DecoderBlock(in_c=ngf*4, out_c=ngf,
+                         norm_type=norm_type, use_leaky=use_leaky),  # CD64
             nn.ConvTranspose2d(in_channels=ngf*2, out_channels=3,
                                kernel_size=4, stride=2, padding=1),  # 論文ではConvolutionとしているがおそらく間違い
             nn.Tanh()
@@ -232,11 +234,12 @@ class UnetGenerator(nn.Module):
         the number of gen filters in first conv layer
     """
 
-    def __init__(self, ngf=64, norm_type='batch'):
+    def __init__(self, ngf=64, norm_type='batch', use_leaky2dc=False):
         super(UnetGenerator, self).__init__()
 
         self.encoder = Encoder(ngf=ngf, norm_type=norm_type)
-        self.decoder = Decoder(ngf=ngf, norm_type=norm_type)
+        self.decoder = Decoder(
+            ngf=ngf, norm_type=norm_type, use_leaky=use_leaky2dc)
 
     def forward(self, x):
         # Encode
@@ -282,7 +285,7 @@ if __name__ == "__main__":
     from tensorboardX import SummaryWriter
     from torchsummary import summary
 
-    unet = UnetGenerator()
+    unet = UnetGenerator(use_leaky2dc=True)
     patchdis = PatchDiscriminator()
     path = pathlib.Path('graph')
     with SummaryWriter(path) as writer:
