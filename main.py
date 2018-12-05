@@ -48,7 +48,7 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', default='facade',
                         choices=['facades', 'edges2shoes', 'edges2handbags'], help='what is datasets to use. default is "facades"')
     parser.add_argument('--use_leaky2dc', action='store_true',
-                        help='if this is ture, use leaky ReLU as activation function of Decoder part of U-Net')
+                        help='do use leaky ReLU as activation function of Decoder part of U-Net')
     parser.add_argument('--num_workers', type=int, default=4,
                         help='num_worker for Dataloader')
     parser.add_argument('-g', '--gpu', help='specify gpu by this number. defalut value is 0,'
