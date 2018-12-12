@@ -47,6 +47,8 @@ if __name__ == '__main__':
                         help='weight for L1 loss. default is 100')
     parser.add_argument('--dataset', default='facade',
                         choices=['facades', 'edges2shoes', 'edges2handbags'], help='what is datasets to use. default is "facades"')
+    parser.add_argument('--use_leaky2dc', action='store_true',
+                        help='do use leaky ReLU as activation function of Decoder part of U-Net')
     parser.add_argument('--num_workers', type=int, default=4,
                         help='num_worker for Dataloader')
     parser.add_argument('-g', '--gpu', help='specify gpu by this number. defalut value is 0,'
@@ -69,9 +71,11 @@ if __name__ == '__main__':
 
     # make directory
     cdir = pathlib.Path('.').resolve()
-    for path in out.parents:
+    for path in list(out.parents)[::-1]:
         if not path.exists():
             path.mkdir()
+    if not out.exists():
+        out.mkdir()
 
     # put arguments into file
     with open(out / "args.txt", "w") as f:
@@ -127,7 +131,8 @@ if __name__ == '__main__':
 
     # build model gen, dis
     models = {
-        'gen': UnetGenerator(ngf=opt.ngf, norm_type=opt.norm_type),
+        'gen': UnetGenerator(ngf=opt.ngf, norm_type=opt.norm_type,
+                             use_leaky2dc=opt.use_leaky2dc),
         'dis': PatchDiscriminator(ndf=opt.ndf, norm_type=opt.norm_type)
     }
     # print("U-Net:\n", models['gen'])
