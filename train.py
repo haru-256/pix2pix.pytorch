@@ -226,3 +226,8 @@ def train_gen(models, gen_optim, inputs, outputs, lam):
     gen_optim.step()
 
     return gen_loss
+
+
+if __name__ == "__main__":
+    x = torch.tanh(torch.randn(10))
+    print(x)
