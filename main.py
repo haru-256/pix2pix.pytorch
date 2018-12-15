@@ -49,7 +49,7 @@ if __name__ == '__main__':
                         choices=['facades', 'edges2shoes', 'edges2handbags'], help='what is datasets to use. default is "facades"')
     parser.add_argument('--use_leaky2dc', action='store_true',
                         help='do use leaky ReLU as activation function of Decoder part of U-Net')
-    parser.add_argument('--not_affine', action='store_false',
+    parser.add_argument('--not_affine', action='store_true',
                         help='**do not** apply affine transformation.'
                         ' This is recommended in the case using Instance Normalization.')
     parser.add_argument('--num_workers', type=int, default=4,
