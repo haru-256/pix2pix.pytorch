@@ -49,6 +49,9 @@ if __name__ == '__main__':
                         choices=['facades', 'edges2shoes', 'edges2handbags'], help='what is datasets to use. default is "facades"')
     parser.add_argument('--use_leaky2dc', action='store_true',
                         help='do use leaky ReLU as activation function of Decoder part of U-Net')
+    parser.add_argument('--not_affine', action='store_false',
+                        help='**do not** apply affine transformation.'
+                        ' This is recommended in the case using Instance Normalization.')
     parser.add_argument('--num_workers', type=int, default=4,
                         help='num_worker for Dataloader')
     parser.add_argument('-g', '--gpu', help='specify gpu by this number. defalut value is 0,'
@@ -132,8 +135,8 @@ if __name__ == '__main__':
     # build model gen, dis
     models = {
         'gen': UnetGenerator(ngf=opt.ngf, norm_type=opt.norm_type,
-                             use_leaky2dc=opt.use_leaky2dc),
-        'dis': PatchDiscriminator(ndf=opt.ndf, norm_type=opt.norm_type)
+                             use_leaky2dc=opt.use_leaky2dc, not_affine=opt.not_affine),
+        'dis': PatchDiscriminator(ndf=opt.ndf, norm_type=opt.norm_type, not_affine=opt.not_affine)
     }
     # print("U-Net:\n", models['gen'])
     # print("Discriminator:\n", models['dis'])
