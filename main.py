@@ -155,9 +155,9 @@ if __name__ == '__main__':
         'dis': make_optimizer(models['dis'])
     }
 
-    print("train dir: {} | val dir{}".format(train_data_dir, val_data_dir))
+    print("train dir: {} | val dir: {}".format(train_data_dir, val_data_dir))
     print("train size: {} | val size: {}".format(
-        len(datasets['train']), len(datasets['val'])))
+        len(datasets['train']), len(datasets['val'])), end="\n\n")
 
     log = train_pix2pix(models, datasets, optimizers=optimizers, lam=opt.lambda_L1,
                         num_epochs=opt.epoch, batch_size=opt.batch_size, device=device,
