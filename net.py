@@ -90,22 +90,24 @@ class Encoder(nn.Module):
     Encoder of U-Net
     """
 
-    def __init__(self, ngf=64, norm_type="instance"):
+    def __init__(self, ngf=64, norm_type="instance", not_affine=False):
         super(Encoder, self).__init__()
 
         self.encoder = nn.Sequential(
-            EncoderBlock(in_c=3, out_c=ngf, norm_type=None),  # C64
-            EncoderBlock(in_c=ngf, out_c=2*ngf, norm_type=norm_type),  # C128
+            EncoderBlock(in_c=3, out_c=ngf, norm_type=None,
+                         isAffine=not not_affine),  # C64
+            EncoderBlock(in_c=ngf, out_c=2*ngf, norm_type=norm_type,
+                         isAffine=not not_affine),  # C128
             EncoderBlock(in_c=ngf*2, out_c=ngf*4,
-                         norm_type=norm_type),  # C256
+                         norm_type=norm_type, isAffine=not not_affine),  # C256
             EncoderBlock(in_c=ngf*4, out_c=ngf*8,
-                         norm_type=norm_type),  # C512
+                         norm_type=norm_type, isAffine=not not_affine),  # C512
             EncoderBlock(in_c=ngf*8, out_c=ngf*8,
-                         norm_type=norm_type),  # C512
+                         norm_type=norm_type, isAffine=not not_affine),  # C512
             EncoderBlock(in_c=ngf*8, out_c=ngf*8,
-                         norm_type=norm_type),  # C512
+                         norm_type=norm_type, isAffine=not not_affine),  # C512
             EncoderBlock(in_c=ngf*8, out_c=ngf*8,
-                         norm_type=norm_type),  # C512
+                         norm_type=norm_type, isAffine=not not_affine),  # C512
             EncoderBlock(in_c=ngf*8, out_c=ngf*8, norm_type=None)  # C512)
         )
 
@@ -183,24 +185,24 @@ class Decoder(nn.Module):
     Decoder of U-Net
     """
 
-    def __init__(self, ngf=64, norm_type='batch', use_leaky=False):
+    def __init__(self, ngf=64, norm_type='batch', not_affine=False, use_leaky=False):
         super(Decoder, self).__init__()
 
         self.decoder = nn.Sequential(
             DecoderBlock(in_c=ngf*8, out_c=ngf*8,
-                         norm_type=norm_type, use_leaky=use_leaky),  # CD512
+                         norm_type=norm_type, use_leaky=use_leaky, isAffine=not not_affine),  # CD512
             DecoderBlock(in_c=ngf*16, out_c=ngf*8,
-                         norm_type=norm_type, use_leaky=use_leaky),  # CD512
+                         norm_type=norm_type, use_leaky=use_leaky, isAffine=not not_affine),  # CD512
             DecoderBlock(in_c=ngf*16, out_c=ngf*8,
-                         norm_type=norm_type, use_leaky=use_leaky),  # CD512
+                         norm_type=norm_type, use_leaky=use_leaky, isAffine=not not_affine),  # CD512
             DecoderBlock(in_c=ngf*16, out_c=ngf*8,
-                         norm_type=norm_type, use_leaky=use_leaky),  # CD512
+                         norm_type=norm_type, use_leaky=use_leaky, isAffine=not not_affine),  # CD512
             DecoderBlock(in_c=ngf*16, out_c=ngf*4,
-                         norm_type=norm_type, use_leaky=use_leaky),  # CD256
+                         norm_type=norm_type, use_leaky=use_leaky, isAffine=not not_affine),  # CD256
             DecoderBlock(in_c=ngf*8, out_c=ngf*2,
-                         norm_type=norm_type, use_leaky=use_leaky),  # CD128
+                         norm_type=norm_type, use_leaky=use_leaky, isAffine=not not_affine),  # CD128
             DecoderBlock(in_c=ngf*4, out_c=ngf,
-                         norm_type=norm_type, use_leaky=use_leaky),  # CD64
+                         norm_type=norm_type, use_leaky=use_leaky, isAffine=not not_affine),  # CD64
             nn.ConvTranspose2d(in_channels=ngf*2, out_channels=3,
                                kernel_size=4, stride=2, padding=1),  # 論文ではConvolutionとしているがおそらく間違い
             nn.Tanh()
@@ -234,12 +236,13 @@ class UnetGenerator(nn.Module):
         the number of gen filters in first conv layer
     """
 
-    def __init__(self, ngf=64, norm_type='batch', use_leaky2dc=False):
+    def __init__(self, ngf=64, norm_type='batch', use_leaky2dc=False, not_affine=False):
         super(UnetGenerator, self).__init__()
 
-        self.encoder = Encoder(ngf=ngf, norm_type=norm_type)
+        self.encoder = Encoder(
+            ngf=ngf, norm_type=norm_type, not_affine=not_affine)
         self.decoder = Decoder(
-            ngf=ngf, norm_type=norm_type, use_leaky=use_leaky2dc)
+            ngf=ngf, norm_type=norm_type, use_leaky=use_leaky2dc, not_affine=not_affine)
 
     def forward(self, x):
         # Encode
@@ -261,14 +264,17 @@ class PatchDiscriminator(nn.Module):
        the number of dis filters in first conv layer
     """
 
-    def __init__(self, ndf=64, norm_type='instance'):
+    def __init__(self, ndf=64, norm_type='instance', not_affine=False):
         super(PatchDiscriminator, self).__init__()
 
-        self.c1 = EncoderBlock(in_c=3+3, out_c=ndf, norm_type=None)
-        self.c2 = EncoderBlock(in_c=ndf, out_c=ndf*2, norm_type=norm_type)
-        self.c3 = EncoderBlock(in_c=ndf*2, out_c=ndf*4, norm_type=norm_type)
+        self.c1 = EncoderBlock(in_c=3+3, out_c=ndf,
+                               norm_type=None, isAffine=not not_affine)
+        self.c2 = EncoderBlock(in_c=ndf, out_c=ndf*2,
+                               norm_type=norm_type, isAffine=not not_affine)
+        self.c3 = EncoderBlock(in_c=ndf*2, out_c=ndf*4,
+                               norm_type=norm_type, isAffine=not not_affine)
         self.c4 = EncoderBlock(in_c=ndf*4, out_c=ndf*8,
-                               stride=1, norm_type=norm_type)
+                               stride=1, norm_type=norm_type, isAffine=not not_affine)
         self.c5 = nn.Conv2d(in_channels=ndf*8, out_channels=1,
                             kernel_size=4, padding=1, stride=1)
 
@@ -285,10 +291,10 @@ if __name__ == "__main__":
     from tensorboardX import SummaryWriter
     from torchsummary import summary
 
-    unet = UnetGenerator(use_leaky2dc=True)
-    patchdis = PatchDiscriminator()
+    unet = UnetGenerator(use_leaky2dc=True, not_affine=True)
+    patchdis = PatchDiscriminator(not_affine=True)
     path = pathlib.Path('graph')
-    with SummaryWriter(path) as writer:
+    with SummaryWriter(str(path)) as writer:
         dummy_input = torch.Tensor(1, 3, 256, 256)
         dummy_input = unet(dummy_input)
         writer.add_graph(patchdis, (torch.Tensor(1, 3, 256, 256),
