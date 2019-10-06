@@ -73,7 +73,7 @@ class Pix2PixModel(BaseModel):
         if not self.opt.no_l1loss:
             self.criterionL1 = L1Loss()
 
-    def forward(self, data_dict):
+    def __call__(self, data_dict):
         """
         forward してloss を計算．
 

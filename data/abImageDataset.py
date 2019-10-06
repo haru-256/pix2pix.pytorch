@@ -1,4 +1,5 @@
 import cv2
+import torch
 from torch.utils.data import Dataset
 import pathlib
 import pandas as pd
@@ -64,6 +65,16 @@ class ABImageDataset(Dataset):
 
         # データ拡張
         A, B = self.transform(A=A, B=B)
+
+        # 値をチェック
+        assert (not self.opt.normA) or torch.all(
+            ((0.0 - self.opt.meanA) / self.opt.stdA <= A)
+            * (A <= (1.0 - self.opt.meanA) / self.opt.stdA)
+        )
+        assert (not self.opt.normB) or torch.all(
+            ((0.0 - self.opt.meanB) / self.opt.stdB <= B)
+            * (B <= (1.0 - self.opt.meanB) / self.opt.stdB)
+        )
 
         return {
             "A": A,

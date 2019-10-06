@@ -45,6 +45,12 @@ class TrainOptions(BaseOptions):
         parser.add_argument(
             "--vis_num", type=int, default=3 * 4, help="可視化する生成データの数, デフォルトは12"
         )
+        parser.add_argument(
+            "--save_freq",
+            type=int,
+            default=1,
+            help="何epochごとにmodelや生成画像を保存するか．default is 1",
+        )
 
         self.isTrain = True
         return parser

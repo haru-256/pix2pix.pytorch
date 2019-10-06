@@ -55,14 +55,8 @@ class Trainer(object):
             log["epoch_{}".format(epoch)] = OrderedDict(
                 train_dis_loss=losses["dis"], train_gen_loss=losses["gen"]
             )
-            # linearly decay learning rate after certain iterations
-            if self.opt.linear_decay:
-                if epoch > self.opt.nepoch_decay:
-                    self.updater.model.scheduler_D.step()
-                    self.updater.model.scheduler_G.step()
-
             # save model & optimizers & losses by epoch
-            if self.opt.save_per_epoch % epoch:
+            if epoch % self.opt.save_freq:
                 torch.save(
                     {
                         "dis_model_state_dict": models["dis"].state_dict(),
@@ -70,11 +64,11 @@ class Trainer(object):
                         "dis_optim_state_dict": optimizers["dis"].state_dict(),
                         "gen_optim_state_dict": optimizers["gen"].state_dict(),
                     },
-                    self.opt.model_dir / "{}_{}epoch.tar".format(self.opt.model, epoch),
+                    self.opt.model_dir / "pix2pix_{}epoch.tar".format(epoch),
                 )
                 # save generate images of validation
                 self.updater.model.save_gen_images(
-                    epoch, dataloaders4vis=self.dataloaders4vis, writer=self.writer
+                    epoch, dataloaders4vis=self.dataloaders4vis
                 )
                 # save log
                 with open(self.opt.log_dir / "log.json", "w") as f:
