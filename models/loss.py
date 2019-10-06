@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 
 
-class GANLoss(nn.Module):
+class GANLoss:
     def __init__(self, gan_mode, device, target_real_label=1.0, target_fake_label=0.0):
         """ Initialize the GANLoss class.
 
@@ -50,7 +50,7 @@ class GANLoss(nn.Module):
             target_tensor = self.fake_label
         return target_tensor.expand_as(prediction)
 
-    def forward(self, input_, target_is_real, for_dis=True):
+    def __call__(self, input_, target_is_real, for_dis=True):
         """Calculate loss given Discriminator's output and grount truth labels.
 
         Parameters:
@@ -101,7 +101,7 @@ class GANLoss(nn.Module):
         return loss
 
 
-class L1Loss(nn.Module):
+class L1Loss:
     def __init__(self):
         """L1ロスを返すクラス．
 
@@ -115,17 +115,17 @@ class L1Loss(nn.Module):
         self.loss = nn.L1Loss()
         print("Use L1Loss")
 
-    def forward(self, fake_img, real_img):
+    def __call__(self, fake_B, real_B):
         """
         L1Loss を計算する．
         Args:
-            fake_img (torch.Tensor): 生成画像．shape : (N, C, H, W)
-            real_img (torch.Tensor): 本物画像．shape : (N, C, H, W)
+            fake_B (torch.Tensor): 生成画像．shape : (N, C, H, W)
+            real_B (torch.Tensor): 本物画像．shape : (N, C, H, W)
 
         Returns:
             Global Generator を実装
         """
 
-        loss = self.loss(fake_img, real_img)
+        loss = self.loss(fake_B, real_B)
         assert loss.dim() == 0, "L1Lossがスカラーでない．Got {}".format(loss.shape)
         return loss

@@ -21,7 +21,8 @@ class BaseModel(object):
         self.netG = None
         self.netD = None
 
-    def migrate(self, data_dict, verbose=False):
+    @staticmethod
+    def migrate(data_dict, device, verbose=False):
         """migrate data to device(e.g. cuda)
 
         Args:
@@ -35,7 +36,7 @@ class BaseModel(object):
                 if verbose:
                     print("{} はGPUへ転送できない".format(key))
                 continue
-            data_dict[key] = data.to(self.opt.device)
+            data_dict[key] = data.to(device)
         return data_dict
 
         def save_gen_images(self, epoch, dataloaders4vis, writer=None):

@@ -25,10 +25,9 @@ class Pix2PixModel(BaseModel):
             init_gain=self.opt.init_gain,
             affine=not self.opt.no_affine,
         )
-
         # Discriminator
         self.netD = define_D(
-            input_nc=opt.B_nc,
+            input_nc=opt.A_nc + opt.B_nc,
             ndf=self.opt.ndf,
             n_layers=self.opt.n_layersD,
             device=self.device,
@@ -89,7 +88,7 @@ class Pix2PixModel(BaseModel):
         losses = {"g_gan": 0, "g_l1": 0, "d_real": 0, "d_fake": 0}
 
         # data migrate device
-        data_dict = self.migrate(data_dict)
+        data_dict = self.migrate(data_dict, self.opt.device)
         # Generate fake image
         fake_B = self.netG(data_dict["A"])
         assert (
@@ -108,9 +107,8 @@ class Pix2PixModel(BaseModel):
         # GAN Loss
         pred_fake = self.netD(A=data_dict["A"], B=fake_B)
         losses["g_gan"] = self.criterionGAN(pred_fake, target_is_real=True)
-
         # L1 Loss
         if not self.opt.no_l1loss:
-            losses["g_l1"] = self.criterionL1(fake_B, data_dict["A"])
+            losses["g_l1"] = self.criterionL1(fake_B=fake_B, real_B=data_dict["B"])
 
         return losses
