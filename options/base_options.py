@@ -37,7 +37,7 @@ class BaseOptions:
         parser.add_argument(
             "--name",
             type=str,
-            default="edge2shoes",
+            default="edges2shoes",
             help="name of the experiment. It decides where to store samples and models．Default is edge2shoes",
         )
         parser.add_argument(
@@ -72,8 +72,8 @@ class BaseOptions:
         parser.add_argument(
             "--n_downG",
             type=int,
-            default=7,
-            help="Generator のダウンサンプリング回数．default = 7, for 128x128",
+            default=8,
+            help="Generator のダウンサンプリング回数．default = 8, for 256x256, 7は128x128用",
         )
         # Discriminator
         parser.add_argument(
@@ -83,7 +83,7 @@ class BaseOptions:
             help="# of discrim filters in the first conv layer",
         )
         parser.add_argument(
-            "--n_layers_D",
+            "--n_layersD",
             type=int,
             default=3,
             help="Discriminator の中間の層数．default is 3 , 70x70 PatchGAN",
@@ -98,6 +98,7 @@ class BaseOptions:
         parser.add_argument(
             "--init_type",
             type=str,
+            choices=["normal"],
             default="normal",
             help="network initialization [normal]",
         )
@@ -121,10 +122,10 @@ class BaseOptions:
             help="# threads for loading data. Default is 3",
         )
         parser.add_argument(
-            "--batch_size", type=int, default=1, help="input batch size. default is 1"
+            "--batch_size", type=int, default=4, help="input batch size. default is 4"
         )
         parser.add_argument(
-            "--scaleSize", type=int, default=286, help="画像の幅をこのサイズにscale．default is 128"
+            "--scaleSize", type=int, default=286, help="画像の幅をこのサイズにscale．default is 286"
         )
         parser.add_argument(
             "--cropSize", type=int, default=256, help="crop images to this size"
@@ -132,7 +133,8 @@ class BaseOptions:
         parser.add_argument(
             "--preprocess",
             type=str,
-            default="random_jitter",
+            default="none",
+            choices=["scale_width", "random_crop", "random_jitter", "none"],
             help="scaling and random cropping of images at load time"
             " [scale_width | random_crop | random_jitter | none]. Default is random_jitter",
         )

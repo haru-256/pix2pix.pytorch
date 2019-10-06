@@ -9,7 +9,7 @@ import pathlib
 
 
 class BaseModel(object):
-    """ Image2Imageの抽象基底クラス
+    """ Image2Imageの基クラス
     実装すべきメソッドは以下の通り．
         __init__ : Generator, Discriminatorのモデルの構築，OptimizerとLossの定義．
         forward : 生成画像とロスのディクショナリを返すメソッド．

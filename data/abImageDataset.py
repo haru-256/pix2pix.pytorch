@@ -155,14 +155,14 @@ def get_params(opt, size):
             Each key is "crop_size", "scale_size", "flip"
     """
     w, h = size
-    if "scale_width" in opt.preprocess:
+    if opt.preprocess in ["random_jitter", "scale_width"]:
         new_w = opt.scaleSize
         new_h = opt.scaleSize * h // w
     else:
         new_h = h
         new_w = w
 
-    if "crop" in opt.preprocess:
+    if opt.preprocess in ["random_jitter", "random_crop"]:
         crop_h = opt.cropSize
         crop_w = opt.cropSize * h // w
     else:

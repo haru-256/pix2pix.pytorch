@@ -7,11 +7,11 @@ from tqdm import tqdm
 
 class Trainer(object):
     def __init__(self, updater, opt, dataloaders4vis):
-        """Trainer class
+        """
+        学習全体を扱うクラス．
 
         Args:
-            updater (Updater): Updater. This executes one epoch process,
-                such as updating parameters
+            updater (Updater): Updater のinstance
             opt (argparse): option of this program
             dataloaders4vis (dict) : 生成画像を可視化するためのデータローダー．keyは'train', 'val'
 
@@ -154,14 +154,14 @@ class Updater(object):
             if not self.opt.no_l1loss:
                 epoch_loss_G["g_l1"] += loss_dict["g_l1"].item()
 
-        losses = {
+        loss_dict = {
             "dis": self.mean(epoch_loss_D, length=len(self.train_dataloader)),
             "gen": self.mean(epoch_loss_G, length=len(self.train_dataloader)),
         }
         models = {"dis": self.model.netD, "gen": self.model.netG}
         optimizers = {"dis": self.model.optimizer_D, "gen": self.model.optimizer_G}
 
-        return losses, models, optimizers
+        return loss_dict, models, optimizers
 
     @staticmethod
     def mean(loss_dict, length):
