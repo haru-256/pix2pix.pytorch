@@ -60,6 +60,20 @@ python train.py --help
 - models : モデルが保存されるディレクトリ
 - log : epochごとの学習lossを保存するディレクトリ．
 
+### facades
+論文は以下の通りに書いてあった．
+
+- epoch : 200
+- batch size : 1
+- データ拡張 : random jitter （286x286にリサイズ後，256x256 にrandom crop） and hflip
+
+### edges2shoes
+論文は以下の通りに書いてあった．
+
+- epoch : 15
+- batch size : 4
+- データ拡張 : なし
+
 ## 再学習
 `resume.py` を実行することで再学習できます．
 
