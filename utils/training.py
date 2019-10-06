@@ -20,7 +20,6 @@ class Trainer(object):
         self.epoch = self.opt.epoch
         self.updater = updater
         self.dataloaders4vis = dataloaders4vis
-        # self.writer = SummaryWriter(self.opt.runs_dir)
 
         if self.opt.device != torch.device("cpu"):
             torch.backends.cudnn.benchmark = True
@@ -55,8 +54,8 @@ class Trainer(object):
             log["epoch_{}".format(epoch)] = OrderedDict(
                 train_dis_loss=losses["dis"], train_gen_loss=losses["gen"]
             )
-            # save model & optimizers & losses by epoch
-            if epoch % self.opt.save_freq:
+            if epoch % self.opt.save_freq == 0:
+                # モデルを保存
                 torch.save(
                     {
                         "dis_model_state_dict": models["dis"].state_dict(),
@@ -66,7 +65,7 @@ class Trainer(object):
                     },
                     self.opt.model_dir / "pix2pix_{}epoch.tar".format(epoch),
                 )
-                # save generate images of validation
+                # save generate images
                 self.updater.model.save_gen_images(
                     epoch, dataloaders4vis=self.dataloaders4vis
                 )
@@ -105,11 +104,11 @@ class Updater(object):
         Args:
             train_dataloader (torch.utils.data.DataLoader): 学習用のdataloader
             model (model): pix2pix
+            opt (Namespace): train.py, resumu.pyの引数
 
         """
         self.train_dataloader = train_dataloader
         self.model = model
-        self.device = self.model.device
         self.opt = opt
 
     def update(self, coeff4dis=0.5):
@@ -131,10 +130,10 @@ class Updater(object):
         epoch_loss_G = {"g_gan": 0.0, "g_l1": 0.0}
         iteration = tqdm(self.train_dataloader, desc="Iteration", unit="iter")
         for data_dict in iteration:
-            # forward process in Pix2Pix
+            # calc loss of Pix2Pix
             loss_dict = self.model(data_dict)
 
-            # calculate final loss scalar
+            # calculate final loss
             loss_D = (loss_dict["d_real"] + loss_dict["d_fake"]) * coeff4dis
             loss_G = loss_dict["g_gan"] + loss_dict["g_l1"] * self.opt.lambda_l1
 

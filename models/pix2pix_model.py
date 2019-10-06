@@ -85,7 +85,7 @@ class Pix2PixModel(BaseModel):
         -------
         losses : 各loss の Loss. Each keys is "g_gan", "g_l1", "d_real", "d_fake".
         """
-        losses = {"g_gan": 0, "g_l1": 0, "d_real": 0, "d_fake": 0}
+        loss_dict = {"g_gan": 0, "g_l1": 0, "d_real": 0, "d_fake": 0}
 
         # data migrate device
         data_dict = self.migrate(data_dict, self.opt.device)
@@ -100,15 +100,15 @@ class Pix2PixModel(BaseModel):
         # Discrimintor Loss = GANLoss(fake) + GANLoss(real)
         pred_fake = self.netD(A=data_dict["A"], B=fake_B.detach())
         pred_real = self.netD(A=data_dict["A"], B=data_dict["B"])
-        losses["d_fake"] = self.criterionGAN(pred_fake, target_is_real=False)
-        losses["d_real"] = self.criterionGAN(pred_real, target_is_real=True)
+        loss_dict["d_fake"] = self.criterionGAN(pred_fake, target_is_real=False)
+        loss_dict["d_real"] = self.criterionGAN(pred_real, target_is_real=True)
 
         # Generator Loss = GANLoss(fake passability loss) + PeceptualLoss + FMLoss + L1Loss
         # GAN Loss
         pred_fake = self.netD(A=data_dict["A"], B=fake_B)
-        losses["g_gan"] = self.criterionGAN(pred_fake, target_is_real=True)
+        loss_dict["g_gan"] = self.criterionGAN(pred_fake, target_is_real=True)
         # L1 Loss
         if not self.opt.no_l1loss:
-            losses["g_l1"] = self.criterionL1(fake_B=fake_B, real_B=data_dict["B"])
+            loss_dict["g_l1"] = self.criterionL1(fake_B=fake_B, real_B=data_dict["B"])
 
-        return losses
+        return loss_dict

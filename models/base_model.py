@@ -16,7 +16,6 @@ class BaseModel(object):
     """
 
     def __init__(self, opt):
-        # super(BaseModel, self).__init__()
         self.opt = opt
         self.netG = None
         self.netD = None
@@ -40,7 +39,7 @@ class BaseModel(object):
         return data_dict
 
     def save_gen_images(self, epoch, dataloaders4vis):
-        """学習データ＆検証データの生成画像を保存するメソッド
+        """学習データ＆検証データを生成し，画像を保存するメソッド
 
         Args:
             epoch (int): epoch
@@ -66,7 +65,7 @@ class BaseModel(object):
             total = fake_B.shape[0]
             assert (
                 total == self.opt.vis_num
-            ), "可視化するデータ数があっていない. Got total:{}, vis_num:{}".format(
+            ), "可視化するデータ数とあっていない. Got total:{}, vis_num:{}".format(
                 total, self.opt.vis_num
             )
             ncol = int(math.sqrt(total))
