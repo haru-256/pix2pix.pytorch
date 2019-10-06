@@ -29,9 +29,11 @@ print("Val Dataset Path :", valData_path)
 # dataset
 train_dataset = ABImageDataset(df_path=trainData_path, opt=opt)
 train4vis_dataset = ABImageDataset(
-    df_path=trainData_path, opt=opt, phase="val", vis=True
+    df_path=trainData_path, opt=opt, mode_inference=True, vis=True
 )
-val4vis_dataset = ABImageDataset(df_path=valData_path, opt=opt, phase="val", vis=True)
+val4vis_dataset = ABImageDataset(
+    df_path=valData_path, opt=opt, mode_inference=True, vis=True
+)
 print("Train Dataset Size : {}".format(len(train_dataset)))
 
 # dataloader for leaning

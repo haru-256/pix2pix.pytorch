@@ -14,9 +14,9 @@ class BaseOptions:
     def __init__(self):
         """Reset the class; indicates the class hasn't been initailized"""
         self.parser = argparse.ArgumentParser(
-            prog="pose-to-image",
-            usage="`python main.py` for training",
-            description="train pix2pix with fashion550k",
+            prog="AtoB",
+            usage="`python train.py` for training",
+            description="train pix2pix",
             epilog="end",
             add_help=True,
         )
@@ -92,6 +92,7 @@ class BaseOptions:
             "--norm_type",
             type=str,
             default="instance",
+            choices=["instance", "batch", "none"],
             help="instance normalization or batch normalization [instance | batch | none]",
         )
         parser.add_argument(
@@ -110,9 +111,7 @@ class BaseOptions:
             "--no_dropout", action="store_true", help="no dropout for the generator"
         )
         parser.add_argument(
-            "--no_affine",
-            action="store_true",
-            help="do not apply affine transformation.",
+            "--no_affine", action="store_true", help="Noralizationのaffine引数をFalseにする．"
         )
         # dataset parameters
         parser.add_argument(

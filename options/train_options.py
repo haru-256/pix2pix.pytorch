@@ -23,6 +23,7 @@ class TrainOptions(BaseOptions):
             "--gan_mode",
             type=str,
             default="vanilla",
+            choices=["vanilla", "lsgan"],
             help="the type of GAN objective. [vanilla| lsgan]."
             " vanilla GAN loss is the cross-entropy objective used in the original GAN paper.",
         )
@@ -39,7 +40,7 @@ class TrainOptions(BaseOptions):
             "--coeff4dis",
             type=float,
             default=1.0,
-            help="Discriminator のGANLoss にかけられる係数．公式リポジトリでは0.5がかけられてあった．default is 0.1",
+            help="Discriminator のGANLoss にかけられる係数．公式リポジトリでは0.5がかけられてあった．default is 1.0",
         )
         # option for generated images
         parser.add_argument(

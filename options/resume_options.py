@@ -12,9 +12,9 @@ class ResumeOptions:
 
     def __init__(self):
         self.parser = argparse.ArgumentParser(
-            prog="pose-to-image",
-            usage="`python main.py` for training",
-            description="train pix2pix with fashion550k",
+            prog="再学習",
+            usage="`python resume.py` for resume",
+            description="resume training of pix2pix"
             epilog="end",
             add_help=True,
         )
@@ -26,7 +26,7 @@ class ResumeOptions:
         parser.add_argument(
             "--name",
             type=str,
-            default="preliminaryExperiment",
+            default="edges2shoes",
             help="name of the experiment. It decides where to store samples and models",
         )
         parser.add_argument("-s", "--seed", help="seed", type=int, required=True)
