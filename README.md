@@ -39,7 +39,7 @@ csv ファイルの中身は以下のようにしてください．`A_path`の�
 実行は以下のように行います．
 
 ```
-python train.py --dataroot hoge/df_dir -n 1 -s 1 --name edges2shoes --save_dir fuga/
+python train.py --dataroot hoge/df_dir -n 1 -s 1 --name edges2shoes --epoch 30 --save_dir fuga/
 ```
 
 ここでプログラムの引数は以下の通りです．
@@ -47,6 +47,7 @@ python train.py --dataroot hoge/df_dir -n 1 -s 1 --name edges2shoes --save_dir f
 - --num : 実験番号
 - --seed : seed 値
 - --name : 実験名．例えば edges2shoes
+- --epoch : epoch数
 - --save_dir : モデルの重みや生成画像を保存する用のディレクトリ
 
 そのほかにもデータ拡張手法の選択や，モデルの層数，バッチサイズなどが指定できる引数があります．詳しくは以下のコマンドでhelpをみてください．テキトーに書いているので意味がわからない引数があるかも知れません．その際は質問してください．
