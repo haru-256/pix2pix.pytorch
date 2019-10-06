@@ -22,7 +22,6 @@ if __name__ == "__main__":
     )
 
     # add argument
-<<<<<<< HEAD
     parser.add_argument("-s", "--seed", help="seed", type=int, required=True)
     parser.add_argument(
         "-n", "--number", help="the number of experiments.", type=int, required=True
@@ -99,46 +98,6 @@ if __name__ == "__main__":
     parser.add_argument(
         "-V", "--version", version="%(prog)s 1.0.0", action="version", default=False
     )
-=======
-    parser.add_argument('-s', '--seed', help='seed',
-                        type=int, required=True)
-    parser.add_argument('-n', '--number', help='the number of experiments.',
-                        type=int, required=True)
-    parser.add_argument('-e', '--epoch', help='the number of epoch, defalut value is 100',
-                        type=int, default=100)
-    parser.add_argument('-bs', '--batch_size', help='batch size. defalut value is 128',
-                        type=int, default=1)
-    parser.add_argument('-vs', '--val_size', help='validation dataset size. defalut value is 16',
-                        type=int, default=16)
-    parser.add_argument('-m', '--mean', help='mean to use for noarmalization',
-                        type=float, default=0.5)
-    parser.add_argument('-std', '--std', help='std to use for noarmalization',
-                        type=float, default=0.5)
-    parser.add_argument('--ngf', help='number of gen filters of first Convolution',
-                        type=int, default=64)
-    parser.add_argument('--ndf', help='number of dis filters of first Convolution',
-                        type=int, default=64)
-    parser.add_argument('--norm_type', help='specify normalization type. defalut value is `batch`,'
-                        'batch: Batch Normalization, instance: Instance Normalization, none: don\'t apply normalization',
-                        choices=['batch', 'instance', 'none'], default='batch')
-    parser.add_argument('--lambda_L1', type=float, default=100.0,
-                        help='weight for L1 loss. default is 100')
-    parser.add_argument('--dataset', default='facade',
-                        choices=['facades', 'edges2shoes', 'edges2handbags'], help='what is datasets to use. default is "facades"')
-    parser.add_argument('--use_leaky2dc', action='store_true',
-                        help='do use leaky ReLU as activation function of Decoder part of U-Net')
-    parser.add_argument('--not_affine', action='store_true',
-                        help='**do not** apply affine transformation.'
-                        ' This is recommended in the case using Instance Normalization.')
-    parser.add_argument('--num_workers', type=int, default=4,
-                        help='num_worker for Dataloader')
-    parser.add_argument('-g', '--gpu', help='specify gpu by this number. defalut value is 0,'
-                        ' -1 is means don\'t use gpu',
-                        choices=[-1, 0, 1], type=int, default=0)
-    parser.add_argument('-V', '--version', version='%(prog)s 1.0.0',
-                        action='version',
-                        default=False)
->>>>>>> a82cc297f667e3c75f4bd49649814db2e33e7742
     # parse arguments
     opt = parser.parse_args()
     out = pathlib.Path(
@@ -218,16 +177,15 @@ if __name__ == "__main__":
 
     # build model gen, dis
     models = {
-<<<<<<< HEAD
         "gen": UnetGenerator(
-            ngf=opt.ngf, norm_type=opt.norm_type, use_leaky2dc=opt.use_leaky2dc
+            ngf=opt.ngf,
+            norm_type=opt.norm_type,
+            use_leaky2dc=opt.use_leaky2dc,
+            not_affine=opt.not_affine,
         ),
-        "dis": PatchDiscriminator(ndf=opt.ndf, norm_type=opt.norm_type),
-=======
-        'gen': UnetGenerator(ngf=opt.ngf, norm_type=opt.norm_type,
-                             use_leaky2dc=opt.use_leaky2dc, not_affine=opt.not_affine),
-        'dis': PatchDiscriminator(ndf=opt.ndf, norm_type=opt.norm_type, not_affine=opt.not_affine)
->>>>>>> a82cc297f667e3c75f4bd49649814db2e33e7742
+        "dis": PatchDiscriminator(
+            ndf=opt.ndf, norm_type=opt.norm_type, not_affine=opt.not_affine
+        ),
     }
     # print("U-Net:\n", models['gen'])
     # print("Discriminator:\n", models['dis'])
@@ -245,7 +203,6 @@ if __name__ == "__main__":
         "dis": make_optimizer(models["dis"]),
     }
 
-<<<<<<< HEAD
     print("train dir: {} | val dir{}".format(train_data_dir, val_data_dir))
     print(
         "train size: {} | val size: {}".format(
@@ -266,9 +223,4 @@ if __name__ == "__main__":
         opt=opt,
     )
     plot_loss(log, out / "loss_{}_{}.png".format(opt.number, opt.seed))
-=======
-    print("train dir: {} | val dir: {}".format(train_data_dir, val_data_dir))
-    print("train size: {} | val size: {}".format(
-        len(datasets['train']), len(datasets['val'])), end="\n\n")
->>>>>>> a82cc297f667e3c75f4bd49649814db2e33e7742
 
