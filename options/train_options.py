@@ -54,6 +54,7 @@ class TrainOptions(BaseOptions):
         )
 
         self.isTrain = True
+        self.resume = False
         return parser
 
 

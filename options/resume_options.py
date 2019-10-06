@@ -14,7 +14,7 @@ class ResumeOptions:
         self.parser = argparse.ArgumentParser(
             prog="再学習",
             usage="`python resume.py` for resume",
-            description="resume training of pix2pix"
+            description="resume training of pix2pix",
             epilog="end",
             add_help=True,
         )
