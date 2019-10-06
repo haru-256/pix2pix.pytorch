@@ -169,6 +169,18 @@ class BaseOptions:
             type=float,
             default=0.5,
         )
+        parser.add_argument(
+            "--interA",
+            default="nearest",
+            help="A（入力画像）に対する補完方法．['nearest', 'bicubic', 'bilinear', 'lanczos']",
+            type=str,
+        )
+        parser.add_argument(
+            "--interB",
+            default="bicubic",
+            help="B（出力画像）に対する補完方法．['nearest', 'bicubic', 'bilinear', 'lanczos']",
+            type=str,
+        )
         # additional parameters
         parser.add_argument(
             "--verbose",

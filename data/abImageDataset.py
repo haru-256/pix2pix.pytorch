@@ -71,6 +71,7 @@ class ABImageDataset(Dataset):
             ((0.0 - self.opt.meanA) / self.opt.stdA <= A)
             * (A <= (1.0 - self.opt.meanA) / self.opt.stdA)
         )
+        assert set(A.unique().tolist()) == {0, 1}  # for edge2shies
         assert (not self.opt.normB) or torch.all(
             ((0.0 - self.opt.meanB) / self.opt.stdB <= B)
             * (B <= (1.0 - self.opt.meanB) / self.opt.stdB)
