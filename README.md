@@ -54,6 +54,11 @@ python train.py --dataroot hoge/df_dir -n 1 -s 1 --name edges2shoes --save_dir f
 python train.py --help
 ```
 
+実行すると，`--save_dir` で指定したディレクトリに以下のディレクトリが作成されます．
+- gen_images : 学習，検証の一部（枚数は`--vis_num` で指定可能）の生成画像を保存するディレクトリ
+- models : モデルが保存されるディレクトリ
+- log : epochごとの学習lossを保存するディレクトリ．
+
 ## 再学習
 `resume.py` を実行することで再学習できます．
 
