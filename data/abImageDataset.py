@@ -69,7 +69,6 @@ class ABImageDataset(Dataset):
             ((0.0 - self.opt.meanA) / self.opt.stdA <= A)
             * (A <= (1.0 - self.opt.meanA) / self.opt.stdA)
         )
-        assert set(A.unique().tolist()) == {0, 1}  # for edge2shies
         assert (not self.opt.normB) or torch.all(
             ((0.0 - self.opt.meanB) / self.opt.stdB <= B)
             * (B <= (1.0 - self.opt.meanB) / self.opt.stdB)
@@ -153,7 +152,7 @@ def get_params(opt, size):
 
     Returns:
         params (dictionary): dictionary of parameters.
-            Each key is "crop_pos", "scale_width_and_crop"
+            Each key is "crop_size", "scale_size", "flip"
     """
     w, h = size
     if "scale_width" in opt.preprocess:
