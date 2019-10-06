@@ -43,7 +43,7 @@ class TrainOptions(BaseOptions):
         )
         # option for generated images
         parser.add_argument(
-            "--vis_num", type=int, default=3 * 4, help="可視化する生成データの数, デフォルトは12"
+            "--vis_num", type=int, default=4 * 4, help="可視化する生成データの数, デフォルトは16"
         )
         parser.add_argument(
             "--save_freq",

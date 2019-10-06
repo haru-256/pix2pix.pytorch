@@ -45,13 +45,13 @@ train_dataloader = DataLoader(
 # dataloader for visuzlizing
 train4vis_dataloader = DataLoader(
     dataset=train4vis_dataset,
-    batch_size=opt.batch_size,
+    batch_size=len(train4vis_dataset),
     shuffle=False,
     num_workers=opt.nThreads,
 )
 val4vis_dataloader = DataLoader(
     dataset=val4vis_dataset,
-    batch_size=opt.batch_size,
+    batch_size=len(train4vis_dataset),
     shuffle=False,
     num_workers=opt.nThreads,
 )
