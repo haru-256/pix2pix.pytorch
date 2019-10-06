@@ -153,7 +153,7 @@ class BaseOptions:
             "--stdA",
             help="std to use for noarmalization of A",
             type=float,
-            default=0,
+            default=1,
         )
         parser.add_argument(
             "-mB",

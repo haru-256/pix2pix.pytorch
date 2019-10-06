@@ -75,6 +75,7 @@ class ABImageDataset(Dataset):
             ((0.0 - self.opt.meanB) / self.opt.stdB <= B)
             * (B <= (1.0 - self.opt.meanB) / self.opt.stdB)
         )
+        assert A.size(0) == self.opt.A_nc and A.size(1) == self.opt.B_nc
 
         return {
             "A": A,
@@ -85,24 +86,6 @@ class ABImageDataset(Dataset):
 
     def __len__(self):
         return len(self.data_path)
-
-
-class Edges2Shoes(ABImageDataset):
-    def __getitem__(self, idx):
-        # 入力（edge）を読み込む
-        edge = cv2.imread(self.A_path.iloc[idx])[:, :, 0:1]
-        # 出力（B）を読み込む
-        img = cv2.cvtColor(cv2.imread(self.B_path.iloc[idx]), cv2.COLOR_BGR2RGB)
-
-        # データ拡張
-        edge, img = self.transform(A=edge, B=img)
-
-        return {
-            "A": edge,
-            "B": img,
-            "A_path": self.A_path.iloc[idx],
-            "B_path": self.B_path.iloc[idx],
-        }
 
 
 _cv2_interpolation_to_str = {
