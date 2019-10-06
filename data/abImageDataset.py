@@ -175,4 +175,3 @@ def get_params(opt, size):
         flip = True
 
     return {"scale_size": (new_h, new_w), "crop_size": (crop_h, crop_w), "flip": flip}
-
