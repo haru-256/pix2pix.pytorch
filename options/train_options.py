@@ -10,8 +10,7 @@ class TrainOptions(BaseOptions):
     def initialize(self, parser):
         parser = BaseOptions.initialize(self, parser)
         # トレーニングについて
-        parser.add_argument("--epoch", type=int, default=30, help="epoch")
-        parser.add_argument("--which_epoch", type=str, default="latest")
+        parser.add_argument("--epoch", type=int, default=15, help="epoch")
         # 最適化パラメーター
         parser.add_argument(
             "--beta1", type=float, default=0.5, help="momentum term of adam"
