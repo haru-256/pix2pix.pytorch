@@ -39,16 +39,14 @@ class ABImageDataset(Dataset):
         self.A_path = df["A_path"]
         self.B_path = df["B_path"]
         self.opt = opt
+        # get params
         self.params = get_params(
-            opt=opt,
-            size=(self.opt.img_height, self.opt.img_width),
-            mode_inference=mode_inference,
+            opt=opt, size=(self.opt.img_height, self.opt.img_width)
         )
-        assert not (
-            mode_inference and self.params["flip"]
-        ), "do not flip in case of phase == validation"
-        # transformar
-        self.transformar = get_transform(opt, self.params)
+        # get transformar
+        self.transformar = get_transform(
+            opt, self.params, mode_inference=mode_inference
+        )
 
     def __getitem__(self, idx):
 
@@ -76,7 +74,7 @@ class ABImageDataset(Dataset):
             ((0.0 - self.opt.meanB) / self.opt.stdB <= B)
             * (B <= (1.0 - self.opt.meanB) / self.opt.stdB)
         )
-        assert A.size(0) == self.opt.A_nc and A.size(1) == self.opt.B_nc
+        assert A.size(0) == self.opt.A_nc and B.size(1) == self.opt.B_nc
 
         return {
             "A": A,
@@ -98,15 +96,16 @@ _cv2_interpolation_to_str = {
 }
 
 
-def get_transform(opt, params):
+def get_transform(opt, params, mode_inference=False):
     """get transforms
 
     Args:
         opt (argparse): プログラムの引数
         params (dict): return of function 'get_params'
+        mode_inference (boolean): 推論かどうか．Trueの場合，scale_width, random_crop などは行わない．
     """
     transform_list = []
-    if "scale_width" in opt.resize_or_crop:
+    if opt.preprocess == "scale_width":
         transform_list.append(
             ResizeAB(
                 size=params["scale_size"],
@@ -114,12 +113,21 @@ def get_transform(opt, params):
                 interB=_cv2_interpolation_to_str[opt.interB],
             )
         )
+    if not mode_inference:
+        if opt.preprocess == "random_jitter":
+            transform_list.append(
+                ResizeAB(
+                    size=params["scale_size"],
+                    interA=_cv2_interpolation_to_str[opt.interA],
+                    interB=_cv2_interpolation_to_str[opt.interB],
+                )
+            )
 
-    if "crop" in opt.resize_or_crop:
-        transform_list.append(RandomCropAB(size=params["crop_size"]))
+        if opt.preprocess in ["random_crop", "random_jitter"]:
+            transform_list.append(RandomCropAB(size=params["crop_size"]))
 
-    if params["flip"]:
-        transform_list.append(RandomHFlipAB(p=opt.flip_p))
+        if params["flip"]:
+            transform_list.append(RandomHFlipAB(p=opt.flip_p))
 
     transform_list += [
         ToTensorAB(),
@@ -136,13 +144,12 @@ def get_transform(opt, params):
     return ComposeAB(transform_list)
 
 
-def get_params(opt, size, mode_inference=False):
+def get_params(opt, size):
     """get parameters for preprocess
 
     Args:
         opt (argparser): arguments of this program
         size (tuple): original size of images
-        phase (string): phase of process
 
     Returns:
         params (dictionary): dictionary of parameters.
@@ -163,7 +170,7 @@ def get_params(opt, size, mode_inference=False):
         crop_h = None
         crop_w = None
 
-    if opt.no_flip or (mode_inference == True):
+    if opt.no_flip:
         flip = False
     else:
         flip = True

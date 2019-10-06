@@ -125,7 +125,7 @@ class BaseOptions:
             "--batch_size", type=int, default=1, help="input batch size. default is 1"
         )
         parser.add_argument(
-            "--scaleSize", type=int, default=256, help="画像の幅をこのサイズにscale．default is 128"
+            "--scaleSize", type=int, default=286, help="画像の幅をこのサイズにscale．default is 128"
         )
         parser.add_argument(
             "--cropSize", type=int, default=256, help="crop images to this size"
@@ -133,8 +133,9 @@ class BaseOptions:
         parser.add_argument(
             "--preprocess",
             type=str,
-            default="none",
-            help="scaling and cropping of images at load time [scale_width | crop | scale_width_and_crop | none]. Default is scale_width",
+            default="random_jitter",
+            help="scaling and random cropping of images at load time"
+            " [scale_width | random_crop | random_jitter | none]. Default is random_jitter",
         )
         parser.add_argument(
             "--no_flip",
