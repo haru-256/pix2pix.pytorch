@@ -59,8 +59,8 @@ python train.py --help
 - gen_images : 学習，検証の一部（枚数は`--vis_num` で指定可能）の生成画像を保存するディレクトリ
 - models : モデルが保存されるディレクトリ
 - log : epochごとの学習lossを保存するディレクトリ．
-
-### facades
+### 実験
+#### facades
 論文は以下の通りに書いてあった．
 - 学習データ数 : 400
 - epoch : 200
@@ -69,9 +69,9 @@ python train.py --help
 
 引数
 ```
-python -n 1 -s 1 --epoch 200 --name label2photo --batch_size 1 --normA --normB --preprocess random_jitter --dataroot /mnt/data/pix2pix/facades/dataframe --save_dir /mnt/data/pix2pix/result_dir/
+python train.py -n 1 -s 1 --epoch 200 --name label2photo --batch_size 1 --normA --normB --preprocess random_jitter --dataroot /mnt/data/pix2pix/facades/dataframe --save_dir /mnt/data/pix2pix/result_dir/
 ```
-### edges2shoes
+#### edges2shoes
 論文は以下の通りに書いてあった．
 - 学習データ数 : 49825
 - epoch : 15
@@ -79,7 +79,7 @@ python -n 1 -s 1 --epoch 200 --name label2photo --batch_size 1 --normA --normB -
 - データ拡張 : なし
 引数
 ```
-python -n 1 -s 1 --epoch 15 --name edges2shoes --batch_size 4 --normA --normB --preprocess none --dataroot /mnt/data/pix2pix/edges2shoes/dataframe --save_dir /mnt/data/pix2pix/result_dir/
+python train.py -n 1 -s 1 --epoch 15 --name edges2shoes --batch_size 4 --normA --normB --preprocess none --dataroot /mnt/data/pix2pix/edges2shoes/dataframe --save_dir /mnt/data/pix2pix/result_dir/
 ```
 ## 再学習
 `resume.py` を実行することで再学習できます．
