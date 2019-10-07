@@ -1,6 +1,6 @@
 # pix2pix.pytorch
 Pix2Pix をPyTorch で実装しました．
-[著者らのPyTorch実装](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix)からpix2pixを抜き出し，実験しやすいように整理しました．ネットワークの構造，初期化など重要な部分は著者らと同様です．
+[著者らのPyTorch実装](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix)からpix2pixのネットワーク部分に関するファイルを抜き出し，実験しやすいように整理しました．ネットワークの構造，初期化など重要な部分は著者らと同様です．
 
 # 環境
 動作確認をしたのは以下の環境下です．
