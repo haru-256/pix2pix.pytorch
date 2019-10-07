@@ -118,5 +118,4 @@ class BaseModel(object):
             self.opt.model_dir / "{}_{}epoch.tar".format(self.opt.model, latest)
         )
         assert latest_file.exists(), "{} is Not Founed".format(latest_file)
-        self.opt.start_epoch = latest + 1
         return latest_file, latest

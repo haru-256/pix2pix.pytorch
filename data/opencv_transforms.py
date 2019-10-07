@@ -59,7 +59,8 @@ class RandomHFlipAB:
         """
         self.p = p
 
-    def hflip(self, img):
+    @staticmethod
+    def hflip(img):
         """Horizontally flip the given numpy ndarray.
         Args:
             img (numpy ndarray): image to be flipped.
@@ -122,7 +123,8 @@ class RandomCropAB:
         j = random.randint(0, w - tw)
         return i, j, th, tw
 
-    def crop(self, img, i, j, h, w):
+    @staticmethod
+    def crop(img, i, j, h, w):
         """Crop the given PIL Image.
         Args:
             img (numpy ndarray): Image to be cropped.
@@ -156,7 +158,8 @@ class ToTensorAB:
     """Convert two images to tensor.
     """
 
-    def to_tensor(self, pic):
+    @staticmethod
+    def to_tensor(pic):
         """Convert a ``PIL Image`` or ``numpy.ndarray`` to tensor.
         See ``ToTensor`` for more details.
         Args:
@@ -210,11 +213,11 @@ class ComposeAB:
         return A, B
 
     def __repr__(self):
-        format_string = self.__class__.__name__ + '('
+        format_string = self.__class__.__name__ + "("
         for t in self.transforms:
-            format_string += '\n'
-            format_string += '    {0}'.format(t)
-        format_string += '\n)'
+            format_string += "\n"
+            format_string += "    {0}".format(t)
+        format_string += "\n)"
         return format_string
 
 

@@ -2,9 +2,9 @@ import pathlib
 import random
 import numpy as np
 import torch
+from torch.utils.data import DataLoader
 from options.train_options import TrainOptions
 from data.abImageDataset import ABImageDataset
-from torch.utils.data import DataLoader
 from utils.training import Trainer, Updater
 from models.pix2pix_model import Pix2PixModel
 
