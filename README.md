@@ -80,6 +80,7 @@ python train.py -n 1 -s 1 --epoch 200 --name label2photo --batch_size 1 --normA 
 - epoch : 15
 - batch size : 4
 - データ拡張 : なし
+
 引数
 ```
 python train.py -n 1 -s 1 --epoch 15 --name edges2shoes --batch_size 4 --normA --normB --preprocess none --dataroot /mnt/data/pix2pix/edges2shoes/dataframe --save_dir /mnt/data/pix2pix/result_dir/
