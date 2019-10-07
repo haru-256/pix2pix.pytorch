@@ -8,8 +8,8 @@ Pix2Pix をPyTorch で実装しました．
 - Ubuntu18.04LTS
 - CUDA 10.0
 - cuDNN 7.4
+- GPU : GeForce GTX 1080
 - Python 3
-- CPU : GeForce GTX 1080
 
 必要なpythonモジュールは以下の通りです．おそらく多少バージョンが違っても大丈夫だと思います．
 
