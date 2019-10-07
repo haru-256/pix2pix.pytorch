@@ -2,4 +2,5 @@ __pycache__/
 .vscode/settings.json
 .vscode/
 .ipynb_checkpoints/
+.python-version
 graph
