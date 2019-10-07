@@ -73,14 +73,14 @@ class BaseModel(object):
             images = torchvision.utils.make_grid(
                 fake_B, normalize=False, nrow=nrow, padding=1
             )
-            images = images * self.opt.std + self.opt.mean
+            images = images * self.opt.stdB + self.opt.meanB
             assert bool(
                 ((0 <= images) * (images <= 1)).all()
             ), "Image is not from 0 to 1. Got: {}".format((images.min(), images.max()))
-            plt.figure(figsize=(12, 12))
+            plt.figure(figsize=(8, 8))
             plt.imshow(images.numpy().transpose(1, 2, 0))
             plt.axis("off")
-            plt.title("Epoch: {}".format(epoch), fontsize="15")
+            plt.title("Epoch: {}".format(epoch), fontsize=15)
             plt.tight_layout()
             path = self.opt.image_dir / "{0}/epoch{1:0>4}.png".format(phase, epoch)
             if not path.parent.exists():

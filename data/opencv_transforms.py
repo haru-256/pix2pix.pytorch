@@ -209,6 +209,14 @@ class ComposeAB:
             A, B = transform(A=A, B=B)
         return A, B
 
+    def __repr__(self):
+        format_string = self.__class__.__name__ + '('
+        for t in self.transforms:
+            format_string += '\n'
+            format_string += '    {0}'.format(t)
+        format_string += '\n)'
+        return format_string
+
 
 class NormalizeAB:
     def __init__(self, meanA, stdA, meanB, stdB, normA=False, normB=True):
@@ -245,7 +253,7 @@ class NormalizeAB:
         """
 
         if self.normA:
-            A = self.nomrmalize(tensor=A, mean=self.meanA, std=self.stdA)
+            A = self.normalize(tensor=A, mean=self.meanA, std=self.stdA)
         if self.normB:
             B = self.normalize(tensor=B, mean=self.meanB, std=self.stdB)
         return A, B

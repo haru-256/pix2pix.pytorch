@@ -16,9 +16,9 @@ class Pix2PixModel(BaseModel):
         # Generator
         self.netG = define_G(
             input_nc=opt.A_nc,
-            output_nc=self.opt.output_nc,
+            output_nc=self.opt.B_nc,
             ngf=self.opt.ngf,
-            device=self.device,
+            device=self.opt.device,
             num_downs=opt.n_downG,
             norm_type=self.opt.norm_type,
             use_dropout=not self.opt.no_dropout,
@@ -30,7 +30,7 @@ class Pix2PixModel(BaseModel):
             input_nc=opt.A_nc + opt.B_nc,
             ndf=self.opt.ndf,
             n_layers=self.opt.n_layersD,
-            device=self.device,
+            device=self.opt.device,
             norm_type=self.opt.norm_type,
             init_gain=self.opt.init_gain,
             affine=not self.opt.no_affine,
@@ -67,7 +67,7 @@ class Pix2PixModel(BaseModel):
 
         # ロス関数の初期化
         # GANLoss
-        self.criterionGAN = GANLoss(gan_mode=self.opt.gan_mode, device=self.device)
+        self.criterionGAN = GANLoss(gan_mode=self.opt.gan_mode, device=self.opt.device)
         # L1Loss
         if not self.opt.no_l1loss:
             self.criterionL1 = L1Loss()

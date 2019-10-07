@@ -122,6 +122,18 @@ class BaseOptions:
             help="# threads for loading data. Default is 3",
         )
         parser.add_argument(
+            "--img_height",
+            default=256,
+            type=int,
+            help="image height. Default is 256",
+        )
+        parser.add_argument(
+            "--img_width",
+            default=256,
+            type=int,
+            help="image width. Default is 256",
+        )
+        parser.add_argument(
             "--batch_size", type=int, default=4, help="input batch size. default is 4"
         )
         parser.add_argument(
@@ -140,36 +152,52 @@ class BaseOptions:
         )
         parser.add_argument(
             "--no_flip",
+            type=float,
+            default=0.5,
+            help="flip probability",
+        )
+        parser.add_argument(
+            "--flip_p",
             action="store_true",
-            help="if specified, do not flip the images for data augmentation",
+            help="probabirity",
         )
         parser.add_argument(
             "-mA",
             "--meanA",
-            help="mean to use for noarmalization of A",
+            help="mean to use for noarmalization of A. default is 0.5.",
             type=float,
-            default=0,
+            default=0.5,
         )
         parser.add_argument(
             "-stdA",
             "--stdA",
-            help="std to use for noarmalization of A",
+            help="std to use for noarmalization of A. default is 0.5.",
             type=float,
-            default=1,
+            default=0.5,
         )
         parser.add_argument(
             "-mB",
             "--meanB",
-            help="mean to use for noarmalization of B",
+            help="mean to use for noarmalization of B. default is 0.5.",
             type=float,
             default=0.5,
         )
         parser.add_argument(
             "-stdB",
             "--stdB",
-            help="std to use for noarmalization of B",
+            help="std to use for noarmalization of B. default is 0.5.",
             type=float,
             default=0.5,
+        )
+        parser.add_argument(
+            "--normA",
+            action="store_true",
+            help="A をmeanA, stdA で正規化する",
+        )
+        parser.add_argument(
+            "--normB",
+            action="store_true",
+            help="B を meanB, stdB で正規化する",
         )
         parser.add_argument(
             "--interA",
@@ -263,6 +291,9 @@ class BaseOptions:
 
         # オプションの出力&保存
         self.print_options(opt)
+
+        # resume をFalseに
+        self.opt.resume=False
 
         return self.opt
 

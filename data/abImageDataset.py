@@ -43,8 +43,8 @@ class ABImageDataset(Dataset):
         self.params = get_params(
             opt=opt, size=(self.opt.img_height, self.opt.img_width)
         )
-        # get transformar
-        self.transformar = get_transform(
+        # get transformer
+        self.transformer = get_transform(
             opt, self.params, mode_inference=mode_inference
         )
 
@@ -62,7 +62,7 @@ class ABImageDataset(Dataset):
             B = cv2.cvtColor(cv2.imread(self.B_path.iloc[idx]), cv2.COLOR_BGR2RGB)
 
         # データ拡張
-        A, B = self.transform(A=A, B=B)
+        A, B = self.transformer(A=A, B=B)
 
         # 値をチェック
         assert (not self.opt.normA) or torch.all(
@@ -73,7 +73,8 @@ class ABImageDataset(Dataset):
             ((0.0 - self.opt.meanB) / self.opt.stdB <= B)
             * (B <= (1.0 - self.opt.meanB) / self.opt.stdB)
         )
-        assert A.size(0) == self.opt.A_nc and B.size(1) == self.opt.B_nc
+        # チャンネルをチェック
+        assert A.size(0) == self.opt.A_nc and B.size(0) == self.opt.B_nc, "Got A : {}, B : {}".format(A.size(0), B.size(0))
 
         return {
             "A": A,
@@ -83,7 +84,7 @@ class ABImageDataset(Dataset):
         }
 
     def __len__(self):
-        return len(self.data_path)
+        return len(self.A_path)
 
 
 _cv2_interpolation_to_str = {

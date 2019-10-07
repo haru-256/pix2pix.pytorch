@@ -43,7 +43,7 @@ python train.py --dataroot hoge/df_dir -n 1 -s 1 --name edges2shoes --epoch 30 -
 ```
 
 ここでプログラムの引数は以下の通りです．
-- --dataroot : 上記で作成したdataframeが入っているディレクトリへのパス
+- --dataroot : 上記で作成したcsvファイルが入っているディレクトリへのパス
 - --num : 実験番号
 - --seed : seed 値
 - --name : 実験名．例えば edges2shoes
@@ -62,18 +62,25 @@ python train.py --help
 
 ### facades
 論文は以下の通りに書いてあった．
-
+- 学習データ数 : 400
 - epoch : 200
 - batch size : 1
 - データ拡張 : random jitter （286x286にリサイズ後，256x256 にrandom crop） and hflip
 
+引数
+```
+python -n 1 -s 1 --epoch 200 --name label2photo --batch_size 1 --normA --normB --preprocess random_jitter --dataroot /mnt/data/pix2pix/facades/dataframe --save_dir /mnt/data/pix2pix/result_dir/
+```
 ### edges2shoes
 論文は以下の通りに書いてあった．
-
+- 学習データ数 : 49825
 - epoch : 15
 - batch size : 4
 - データ拡張 : なし
-
+引数
+```
+python -n 1 -s 1 --epoch 15 --name edges2shoes --batch_size 4 --normA --normB --preprocess none --dataroot /mnt/data/pix2pix/edges2shoes/dataframe --save_dir /mnt/data/pix2pix/result_dir/
+```
 ## 再学習
 `resume.py` を実行することで再学習できます．
 

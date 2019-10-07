@@ -3,6 +3,7 @@ import datetime
 from collections import OrderedDict
 import torch
 from tqdm import tqdm
+# from tqdm import tqdm_notebook as tqdm # for debug
 
 
 class Trainer(object):
