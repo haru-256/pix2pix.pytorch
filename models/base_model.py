@@ -115,7 +115,7 @@ class BaseModel(object):
             if epoch > latest:
                 latest = epoch
         latest_file = pathlib.Path(
-            self.opt.model_dir / "{}_{}epoch.tar".format(self.opt.model, latest)
+            self.opt.model_dir / "pix2pix_{}epoch.tar".format(latest)
         )
         assert latest_file.exists(), "{} is Not Founed".format(latest_file)
         return latest_file, latest

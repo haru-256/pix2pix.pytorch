@@ -71,10 +71,10 @@ class ResumeOptions:
         print(message)
 
         # save to the disk
-        file_name = opt.chekpoints_dir / "args4resume.txt"
+        file_name = opt.checkpoints_dir / "args4resume.txt"
         with open(file_name, "w") as f:
             f.write(message)
-        file_name = opt.chekpoints_dir / "args4resume.pickle"
+        file_name = opt.checkpoints_dir / "args4resume.pickle"
         with open(file_name, "wb") as f:
             pickle.dump(opt, f)
 
@@ -85,18 +85,18 @@ class ResumeOptions:
         opt = self.parser.parse_args()
 
         # checkpoint directory
-        chekpoints_dir = pathlib.Path(
+        checkpoints_dir = pathlib.Path(
             "{0}/{1}/result_{2}/result_{2}_{3}".format(
                 opt.save_dir, opt.name, opt.num, opt.seed
             )
         ).resolve()
-        if not chekpoints_dir.exists():
+        if not checkpoints_dir.exists():
             raise FileNotFoundError(
-                "{} が存在せず，train optionが読み込めません".format(chekpoints_dir)
+                "{} が存在せず，train optionが読み込めません".format(checkpoints_dir)
             )
 
         # optionを読み込み
-        with open(chekpoints_dir / "args.pickle", "rb") as f:
+        with open(checkpoints_dir / "args.pickle", "rb") as f:
             train_opt = pickle.load(f)
 
         # train_optionに追加
@@ -105,7 +105,8 @@ class ResumeOptions:
         train_opt.which_epoch = opt.which_epoch
         train_opt.resume = True
 
-        print("load checkpoints_dir: {}".format(train_opt.chekpoints_dir))
+        print("load checkpoints_dir: {}".format(train_opt.checkpoints_dir))
+
 
         # set gpu ids
         if opt.gpu_id == 0:
