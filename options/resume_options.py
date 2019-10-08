@@ -41,7 +41,7 @@ class ResumeOptions:
             help="gpu id: e.g. 0 , 1. use -1 for CPU. 一枚のGPUを使用する．" "複数枚には対応していない．",
         )
         parser.add_argument(
-            "--epoch", type=int, default=50, help="あとepochまで行うか, default is 50"
+            "--epoch", type=int, default=50, help="あと何epoch学習するか, default is 50"
         )
         parser.add_argument(
             "--which_epoch",
