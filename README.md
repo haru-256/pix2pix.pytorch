@@ -55,7 +55,7 @@ python train.py --dataroot hoge/df_dir -n 1 -s 1 --name edges2shoes --epoch 30 -
 python train.py --help
 ```
 
-実行すると，`--save_dir` で指定したディレクトリに`{name}/result_{num}/result_{num}_{1}` が作成され，さらにその下に以下のディレクトリが作成されます．
+実行すると，`--save_dir` で指定したディレクトリに`{name}/result_{num}/result_{num}_{seed}` が作成され，さらにその下に以下のディレクトリが作成されます．
 - gen_images : 学習，検証の一部（枚数は`--vis_num` で指定可能）の生成画像を保存するディレクトリ
 - models : モデルが保存されるディレクトリ
 - log : epochごとの学習lossを保存するディレクトリ．
