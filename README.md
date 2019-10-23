@@ -28,9 +28,9 @@ csv ファイルの中身は以下のようにしてください．`A_path`の�
 
 | A_path | B_path |
 |:----:|:----|
-|hoge1.jpg | fuga1.png|
-|hoge2.jpg | fuga2.png|
-|hoge3.jpg | fuga3.png|
+|A1.jpg | B1.png|
+|A2.jpg | B2.png|
+|A3.jpg | B3.png|
 
 以上の形式のcsv ファイルを学習用は `train_df.csv`，検証用は `val_df.csv` という名前で作成してください．
 
