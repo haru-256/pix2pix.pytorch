@@ -29,6 +29,9 @@ class TrainOptions(BaseOptions):
         # option of loss
         # Generator Loss
         parser.add_argument(
+            "--no_ganloss", action="store_true", help="generatorのLossにGANLossを定義しない"
+        )
+        parser.add_argument(
             "--no_l1loss", action="store_true", help="generatorのLossにl1Lossを定義しない"
         )
         parser.add_argument(

@@ -3,6 +3,7 @@ import datetime
 from collections import OrderedDict
 import torch
 from tqdm import tqdm
+
 # from tqdm import tqdm_notebook as tqdm # for debug
 
 
@@ -57,15 +58,25 @@ class Trainer(object):
             )
             if epoch % self.opt.save_freq == 0:
                 # モデルを保存
-                torch.save(
-                    {
-                        "dis_model_state_dict": models["dis"].state_dict(),
-                        "gen_model_state_dict": models["gen"].state_dict(),
-                        "dis_optim_state_dict": optimizers["dis"].state_dict(),
-                        "gen_optim_state_dict": optimizers["gen"].state_dict(),
-                    },
-                    self.opt.model_dir / "pix2pix_{}epoch.tar".format(epoch),
-                )
+                if self.opt.no_ganloss:
+                    torch.save(
+                        {
+                            "dis_model_state_dict": models["dis"].state_dict(),
+                            "gen_model_state_dict": models["gen"].state_dict(),
+                            "dis_optim_state_dict": optimizers["dis"].state_dict(),
+                            "gen_optim_state_dict": optimizers["gen"].state_dict(),
+                        },
+                        self.opt.model_dir / "pix2pix_{}epoch.tar".format(epoch),
+                    )
+                else:
+                    torch.save(
+                        {
+                            "gen_model_state_dict": models["gen"].state_dict(),
+                            "gen_optim_state_dict": optimizers["gen"].state_dict(),
+                        },
+                        self.opt.model_dir / "pix2pix_{}epoch.tar".format(epoch),
+                    )
+
                 # save generate images
                 self.updater.model.save_gen_images(
                     epoch, dataloaders4vis=self.dataloaders4vis
@@ -144,9 +155,10 @@ class Updater(object):
             self.model.optimizer_G.step()
 
             # backward Discrimintor
-            self.model.optimizer_D.zero_grad()
-            loss_D.backward()
-            self.model.optimizer_D.step()
+            if self.opt.no_ganloss:
+                self.model.optimizer_D.zero_grad()
+                loss_D.backward()
+                self.model.optimizer_D.step()
 
             # ロスを保存
             epoch_loss_D["d_real"] += loss_dict["d_real"].item()
@@ -159,8 +171,12 @@ class Updater(object):
             "dis": self.mean(epoch_loss_D, length=len(self.train_dataloader)),
             "gen": self.mean(epoch_loss_G, length=len(self.train_dataloader)),
         }
-        models = {"dis": self.model.netD, "gen": self.model.netG}
-        optimizers = {"dis": self.model.optimizer_D, "gen": self.model.optimizer_G}
+        if not self.opt.no_ganloss:
+            models = {"dis": self.model.netD, "gen": self.model.netG}
+            optimizers = {"dis": self.model.optimizer_D, "gen": self.model.optimizer_G}
+        else:
+            models = {"gen": self.model.netG}
+            optimizers = {"gen": self.model.optimizer_G}
 
         return loss_dict, models, optimizers
 

@@ -26,23 +26,25 @@ class Pix2PixModel(BaseModel):
             affine=not self.opt.no_affine,
         )
         # Discriminator
-        self.netD = define_D(
-            input_nc=opt.A_nc + opt.B_nc,
-            ndf=self.opt.ndf,
-            n_layers=self.opt.n_layersD,
-            device=self.opt.device,
-            norm_type=self.opt.norm_type,
-            init_gain=self.opt.init_gain,
-            affine=not self.opt.no_affine,
-        )
+        if not self.opt.no_ganloss:
+            self.netD = define_D(
+                input_nc=opt.A_nc + opt.B_nc,
+                ndf=self.opt.ndf,
+                n_layers=self.opt.n_layersD,
+                device=self.opt.device,
+                norm_type=self.opt.norm_type,
+                init_gain=self.opt.init_gain,
+                affine=not self.opt.no_affine,
+            )
 
         # Optimizer の初期化
         self.optimizer_G = torch.optim.Adam(
             self.netG.parameters(), lr=self.opt.lr, betas=(self.opt.beta1, 0.999)
         )
-        self.optimizer_D = torch.optim.Adam(
-            self.netD.parameters(), lr=self.opt.lr, betas=(self.opt.beta1, 0.999)
-        )
+        if not self.opt.no_ganloss:
+            self.optimizer_D = torch.optim.Adam(
+                self.netD.parameters(), lr=self.opt.lr, betas=(self.opt.beta1, 0.999)
+            )
 
         # resume であれば，pretrainのモデルを読み込む．
         self.opt.start_epoch = 1
@@ -59,15 +61,19 @@ class Pix2PixModel(BaseModel):
             checkpoint = torch.load(path, self.opt.device)
 
             self.netG.load_state_dict(checkpoint["gen_model_state_dict"])
-            self.netD.load_state_dict(checkpoint["dis_model_state_dict"])
             self.optimizer_G.load_state_dict(checkpoint["gen_optim_state_dict"])
-            self.optimizer_D.load_state_dict(checkpoint["dis_optim_state_dict"])
+            if self.opt.no_ganloss:
+                self.netD.load_state_dict(checkpoint["dis_model_state_dict"])
+                self.optimizer_D.load_state_dict(checkpoint["dis_optim_state_dict"])
 
             print("Load pretrained model : {}".format(path), end="\n" + "=" * 60 + "\n")
 
         # ロス関数の初期化
         # GANLoss
-        self.criterionGAN = GANLoss(gan_mode=self.opt.gan_mode, device=self.opt.device)
+        if self.opt.no_ganloss:
+            self.criterionGAN = GANLoss(
+                gan_mode=self.opt.gan_mode, device=self.opt.device
+            )
         # L1Loss
         if not self.opt.no_l1loss:
             self.criterionL1 = L1Loss()
@@ -98,15 +104,17 @@ class Pix2PixModel(BaseModel):
         )
 
         # Discrimintor Loss = GANLoss(fake) + GANLoss(real)
-        pred_fake = self.netD(A=data_dict["A"], B=fake_B.detach())
-        pred_real = self.netD(A=data_dict["A"], B=data_dict["B"])
-        loss_dict["d_fake"] = self.criterionGAN(pred_fake, target_is_real=False)
-        loss_dict["d_real"] = self.criterionGAN(pred_real, target_is_real=True)
+        if self.opt.no_ganloss:
+            pred_fake = self.netD(A=data_dict["A"], B=fake_B.detach())
+            pred_real = self.netD(A=data_dict["A"], B=data_dict["B"])
+            loss_dict["d_fake"] = self.criterionGAN(pred_fake, target_is_real=False)
+            loss_dict["d_real"] = self.criterionGAN(pred_real, target_is_real=True)
 
         # Generator Loss = GANLoss(fake passability loss) + PeceptualLoss + FMLoss + L1Loss
         # GAN Loss
-        pred_fake = self.netD(A=data_dict["A"], B=fake_B)
-        loss_dict["g_gan"] = self.criterionGAN(pred_fake, target_is_real=True)
+        if self.opt.no_ganloss:
+            pred_fake = self.netD(A=data_dict["A"], B=fake_B)
+            loss_dict["g_gan"] = self.criterionGAN(pred_fake, target_is_real=True)
         # L1 Loss
         if not self.opt.no_l1loss:
             loss_dict["g_l1"] = self.criterionL1(fake_B=fake_B, real_B=data_dict["B"])
