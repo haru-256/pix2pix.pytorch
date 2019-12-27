@@ -104,7 +104,7 @@ class Pix2PixModel(BaseModel):
         )
 
         # Discrimintor Loss = GANLoss(fake) + GANLoss(real)
-        if self.opt.no_ganloss:
+        if not self.opt.no_ganloss:
             pred_fake = self.netD(A=data_dict["A"], B=fake_B.detach())
             pred_real = self.netD(A=data_dict["A"], B=data_dict["B"])
             loss_dict["d_fake"] = self.criterionGAN(pred_fake, target_is_real=False)
@@ -112,7 +112,7 @@ class Pix2PixModel(BaseModel):
 
         # Generator Loss = GANLoss(fake passability loss) + PeceptualLoss + FMLoss + L1Loss
         # GAN Loss
-        if self.opt.no_ganloss:
+        if not self.opt.no_ganloss:
             pred_fake = self.netD(A=data_dict["A"], B=fake_B)
             loss_dict["g_gan"] = self.criterionGAN(pred_fake, target_is_real=True)
         # L1 Loss

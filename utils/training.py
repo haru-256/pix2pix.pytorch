@@ -58,7 +58,7 @@ class Trainer(object):
             )
             if epoch % self.opt.save_freq == 0:
                 # モデルを保存
-                if self.opt.no_ganloss:
+                if not self.opt.no_ganloss:
                     torch.save(
                         {
                             "dis_model_state_dict": models["dis"].state_dict(),
@@ -155,17 +155,16 @@ class Updater(object):
             self.model.optimizer_G.step()
 
             # backward Discrimintor
-            if self.opt.no_ganloss:
+            if not self.opt.no_ganloss:
                 self.model.optimizer_D.zero_grad()
                 loss_D.backward()
                 self.model.optimizer_D.step()
 
             # ロスを保存
-            epoch_loss_D["d_real"] += loss_dict["d_real"].item()
-            epoch_loss_D["d_fake"] += loss_dict["d_fake"].item()
-            epoch_loss_G["g_gan"] += loss_dict["g_gan"].item()
-            if not self.opt.no_l1loss:
-                epoch_loss_G["g_l1"] += loss_dict["g_l1"].item()
+            for epoch_loss in [epoch_loss_D, epoch_loss_G]:
+                for key in epoch_loss.keys():
+                    if isinstance(loss_dict[key], torch.Tensor):
+                        epoch_loss_G[key] += loss_dict[key].item()
 
         loss_dict = {
             "dis": self.mean(epoch_loss_D, length=len(self.train_dataloader)),
